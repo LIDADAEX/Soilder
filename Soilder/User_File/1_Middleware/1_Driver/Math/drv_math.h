@@ -16,7 +16,14 @@
 
 #include "stm32f4xx_hal.h"
 #include "arm_math.h"
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-result"
+
 #include "Eigen/Dense"
+
+#pragma clang diagnostic pop
+
 #include <float.h>
 
 /* Exported macros -----------------------------------------------------------*/

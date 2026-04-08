@@ -66,7 +66,29 @@ public:
 
     inline void Set_Now(float __Now);
 
+    inline void Set_Dead_Zone(float __Dead_Zone);
+
     inline void Set_Integral_Error(float __Integral_Error);
+
+    inline float Get_K_P();
+
+    inline float Get_K_I();
+
+    inline float Get_K_D();
+
+    inline float Get_K_F();
+
+    inline float Get_I_Out_Max();
+
+    inline float Get_Out_Max();
+
+    inline float Get_Dead_Zone();
+
+    inline float Get_I_Variable_Speed_A();
+
+    inline float Get_I_Variable_Speed_B();
+    
+    inline float Get_I_Separate_Threshold();
 
     void TIM_Calculate_PeriodElapsedCallback();
 
@@ -276,6 +298,102 @@ inline void Class_PID::Set_Now(float __Now)
 inline void Class_PID::Set_Integral_Error(float __Integral_Error)
 {
     Integral_Error = __Integral_Error;
+}
+
+/**
+ * @brief 获取PID的P
+ * @return float P
+ */
+inline float Class_PID::Get_K_P()
+{
+    return K_P;
+}
+
+/**
+ * @brief 获取PID的I
+ * @return float I
+ */
+inline float Class_PID::Get_K_I()
+{
+    return K_I;
+}
+
+/**
+ * @brief 获取PID的D
+ * @return float D
+ */
+inline float Class_PID::Get_K_D()
+{
+    return K_D;
+}
+
+/**
+ * @brief 获取前馈K_F
+ * @return float K_F
+ */
+inline float Class_PID::Get_K_F()
+{
+    return K_F;
+}
+
+/**
+ * @brief 获取积分限幅
+ * @return float 积分限幅值
+ */
+inline float Class_PID::Get_I_Out_Max()
+{
+    return I_Out_Max;
+}
+
+/**
+ * @brief 获取输出限幅
+ * @return float 输出限幅值
+ */
+inline float Class_PID::Get_Out_Max()
+{
+    return Out_Max;
+}
+
+/**
+ * @brief 获取死区
+ * @return float 死区大小
+ */
+inline float Class_PID::Get_Dead_Zone()
+{
+    return Dead_Zone;
+}
+
+// 如果你还需要获取当前的死区设置接口，顺便帮你把 Set 也补一个，因为之前的 Init 里有但没单独的 Set
+inline void Class_PID::Set_Dead_Zone(float __Dead_Zone)
+{
+    Dead_Zone = __Dead_Zone;
+}
+
+/**
+ * @brief 获取变速积分定速内段阈值
+ * * @return float 阈值A
+ */
+inline float Class_PID::Get_I_Variable_Speed_A()
+{
+    return (I_Variable_Speed_A);
+}
+
+/**
+ * @brief 获取变速积分变速区间阈值
+ * * @return float 阈值B
+ */
+inline float Class_PID::Get_I_Variable_Speed_B()
+{
+    return (I_Variable_Speed_B);
+}
+
+/**
+ * @brief 获取积分分离阈值
+ * * @return float 积分分离阈值
+ */
+inline float Class_PID::Get_I_Separate_Threshold()
+{
+    return (I_Separate_Threshold);
 }
 
 #endif

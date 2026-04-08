@@ -902,6 +902,26 @@
               <FileType>5</FileType>
               <FilePath>..\User_File\1_Middleware\3_Debug\debug_cmd.h</FilePath>
             </File>
+            <File>
+              <FileName>debug_fifo.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\User_File\1_Middleware\3_Debug\debug_fifo.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>debug_fifo.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\User_File\1_Middleware\3_Debug\debug_fifo.h</FilePath>
+            </File>
+            <File>
+              <FileName>debug_cmd_interface.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\User_File\1_Middleware\3_Debug\debug_cmd_interface.h</FilePath>
+            </File>
+            <File>
+              <FileName>debug_cmd_interface.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\User_File\1_Middleware\3_Debug\debug_cmd_interface.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

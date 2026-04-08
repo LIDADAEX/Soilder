@@ -227,6 +227,8 @@ void Class_Motor_DM_Normal::Init(CAN_HandleTypeDef *hcan, uint8_t __CAN_Rx_ID, u
         CAN_Tx_ID = __CAN_Tx_ID + 0x300;
         break;
     }
+    default:
+    break;
     }
     Motor_DM_Control_Method = __Motor_DM_Control_Method;
     Angle_Max = __Angle_Max;
@@ -455,6 +457,8 @@ void Class_Motor_DM_Normal::Output()
 
         break;
     }
+    default:
+    break;
     }
 }
 
