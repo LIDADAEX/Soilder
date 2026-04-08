@@ -61,3 +61,4 @@ void Logger::writeToConsole(LogLevel level, const std::string &formattedMsg) {
         break;
     }
 }
+

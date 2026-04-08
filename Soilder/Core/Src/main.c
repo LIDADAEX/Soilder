@@ -27,9 +27,12 @@
 #include "usb_device.h"
 #include "gpio.h"
 
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "5_Task/tsk_config_and_callback.h"
+#include "usbd_cdc_if.h"
+#include "stm32f407xx.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -50,7 +53,46 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+	__asm(".global __use_no_semihosting\n\t");
 
+	static uint8_t putchar_buff[128];
+	static uint16_t putchar_length = 0;
+	static uint32_t putchar_startTime;
+
+	void stdout_putchar(char ch){
+				
+		if (putchar_length == 0) {
+			putchar_startTime = HAL_GetTick();
+		}
+		
+		putchar_buff[putchar_length] = ch;
+		
+		putchar_length++;
+
+		// 触发条件：凑够128字节
+		if (putchar_length >= 128) {
+			// 阻塞直到硬件就绪
+			while (CDC_Transmit_FS(putchar_buff, putchar_length) == USBD_BUSY);
+			// 发完一定要清零长度，下次进入时会重新触发 startTime 更新
+			putchar_length = 0;
+		}
+	}
+	
+	inline void check_putchar(){
+		if(putchar_length != 0  && (HAL_GetTick() - putchar_startTime >= 10)){
+			if(CDC_Transmit_FS(putchar_buff, putchar_length) != USBD_BUSY)
+				putchar_length = 0;
+		}
+	}
+
+	void ttywrch(int ch) {
+		uint8_t data = (uint8_t)ch; // 显式转换，确保只取低8位
+		while (CDC_Transmit_FS(&data, 1) == USBD_BUSY);
+	}
+	
+    void _sys_exit(int x) { while (1); }
+	
+	
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -118,9 +160,9 @@ int main(void)
   MX_USART3_UART_Init();
   MX_USART6_UART_Init();
   MX_USB_DEVICE_Init();
-  MX_IWDG_Init();
+//  MX_IWDG_Init();
   /* USER CODE BEGIN 2 */
-
+  Task_Init();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -128,7 +170,8 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
+	  Task_Loop();
+	  check_putchar();
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -152,7 +195,7 @@ void SystemClock_Config(void)
   * in the RCC_OscInitTypeDef structure.
   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI|RCC_OSCILLATORTYPE_HSE;
-  RCC_OscInitStruct.HSEState = RCC_HSE_BYPASS;
+  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
@@ -178,6 +221,10 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
+  /** Enables the Clock Security System
+  */
+  HAL_RCC_EnableCSS();
 }
 
 /* USER CODE BEGIN 4 */
@@ -198,3 +245,19 @@ void Error_Handler(void)
   }
   /* USER CODE END Error_Handler_Debug */
 }
+#ifdef USE_FULL_ASSERT
+/**
+  * @brief  Reports the name of the source file and the source line number
+  *         where the assert_param error has occurred.
+  * @param  file: pointer to the source file name
+  * @param  line: assert_param error line source number
+  * @retval None
+  */
+void assert_failed(uint8_t *file, uint32_t line)
+{
+  /* USER CODE BEGIN 6 */
+  /* User can add his own implementation to report the file name and line number,
+     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+  /* USER CODE END 6 */
+}
+#endif /* USE_FULL_ASSERT */

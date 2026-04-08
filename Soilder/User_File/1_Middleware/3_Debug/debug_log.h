@@ -2,6 +2,7 @@
 #define DEBUG_LOG_H
 
 #include "stm32f4xx_hal.h"
+
 #include <stdio.h>
 #include <string>
 
@@ -98,21 +99,6 @@ inline void Logger::setLogLevel(LogLevel level) {
     m_consoleLevel = level;
 }
 
-extern "C" {
-		
-	extern UART_HandleTypeDef huart1;
-	
-    #ifdef __GNUC__
-    #define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
-    #else
-    #define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
-    #endif
-    PUTCHAR_PROTOTYPE
-    {
-        HAL_UART_Transmit(&huart1, (uint8_t *) &ch, 1, 0xFFFF);
-        return ch;
-    }
 
-}
 
 #endif // DEBUG_LOG_H
