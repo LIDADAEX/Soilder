@@ -892,6 +892,16 @@
               <FileType>5</FileType>
               <FilePath>..\User_File\1_Middleware\3_Debug\debug_log.h</FilePath>
             </File>
+            <File>
+              <FileName>debug_cmd.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\User_File\1_Middleware\3_Debug\debug_cmd.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>debug_cmd.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\User_File\1_Middleware\3_Debug\debug_cmd.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

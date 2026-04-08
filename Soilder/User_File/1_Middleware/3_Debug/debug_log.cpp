@@ -40,25 +40,22 @@ void Logger::log(LogLevel level, const std::string &message, const char *file, c
 }
 
 void Logger::writeToConsole(LogLevel level, const std::string &formattedMsg) {
+	const char* color_head = "";
+    const char* level_tag = "";
+    const char* color_tail = "\033[0m";
+
+    // 1. 预设颜色和标签 (直接用指针，避免字符串拷贝)
     switch (level) {
-    case LogLevel::Debug:
-        std::cout << "\033[37m" << "[DEBUG]" << formattedMsg << "\033[0m" << std::endl; // 灰色
-        break;
-    case LogLevel::Info:
-        std::cout << "[INFO]" << formattedMsg << std::endl;
-        break;
-    case LogLevel::Warning:
-        std::cout << "\033[33m" << "[WARNING]" << formattedMsg << "\033[0m" << std::endl; //黄色
-        break;
-    case LogLevel::Error:
-        std::cout << "\033[31m" << "[ERROR]" << formattedMsg << "\033[0m" << std::endl; //红色
-        break;
-    case LogLevel::Critical:
-        std::cout << "\033[31m" << "[CRITICAL]" << formattedMsg << "\033[0m" << std::endl; //红色
-        break;
-    case LogLevel::Fatal:
-        std::cout << "\033[41;37m" << "[FATAL]" << formattedMsg << "\033[0m" << std::endl; //红色
-        break;
+        case LogLevel::Debug:    color_head = "\033[37m"; level_tag = "[DEBUG]"; break;
+        case LogLevel::Info:     color_head = "";        level_tag = "[INFO]";  color_tail = ""; break;
+        case LogLevel::Warning:  color_head = "\033[33m"; level_tag = "[WARNING]"; break;
+        case LogLevel::Error:    color_head = "\033[31m"; level_tag = "[ERROR]"; break;
+        case LogLevel::Critical: color_head = "\033[31m"; level_tag = "[CRITICAL]"; break;
+        case LogLevel::Fatal:    color_head = "\033[41;37m"; level_tag = "[FATAL]"; break;
     }
+
+    // 2. 只有一件事：把所有内容拼成一个完整的字符串
+    // 这样底层 _write 只需要调用一次，直接触发你的 128 字节逻辑
+	printf("%s%s%s%s\r\n", color_head, level_tag, formattedMsg.c_str(), color_tail);
 }
 

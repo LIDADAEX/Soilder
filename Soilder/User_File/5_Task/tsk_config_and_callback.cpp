@@ -36,6 +36,7 @@
 #include "tsk_config_and_callback.h"
 #include "stm32f407xx.h"
 #include "1_Middleware/3_Debug/debug_log.h"
+#include "2_Device/Motor/Motor_DJI/dvc_motor_dji.h"
 
 /* Private macros ------------------------------------------------------------*/
 
@@ -47,13 +48,31 @@
 bool init_finished = false;
 uint32_t flag = 0;
 
+Class_Motor_DJI_C620 motor_x_p;
+
+void Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
+{
+    switch (CAN_RxMessage->Header.StdId)
+    {
+    case (0x201):
+    {
+        motor_x_p.CAN_RxCpltCallback(CAN_RxMessage->Data);
+
+        break;
+    }
+    }
+}
+
 /**
  * @brief 初始化任务
  *
  */
 void Task_Init()
 {
-//    LOG_INFO("初始化完成");
+    CAN_Init(&hcan1, Device_CAN1_Callback);
+
+    motor_x_p.Init(&hcan1, Motor_DJI_ID_0x201);
+    LOG_INFO("底盘电机初始化完成");
 }
 
 /**
@@ -61,11 +80,7 @@ void Task_Init()
  *
  */
 void Task_Loop()
-{
-//	LOG_WARNING("nihao");
-	LOG_WARNING("hello!");
-	HAL_Delay(1000); // 必须加延时，给电脑处理时间
-	
+{	
 }
 
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/
