@@ -37,6 +37,8 @@
 #include "stm32f407xx.h"
 #include "1_Middleware/3_Debug/debug_log.h"
 #include "2_Device/Motor/Motor_DJI/dvc_motor_dji.h"
+#include "1_Middleware/3_Debug/debug_cmd_interface.h"
+#include "3_Chariot/1_Module/Chassis/crt_chassis.h"
 
 /* Private macros ------------------------------------------------------------*/
 
@@ -49,6 +51,18 @@ bool init_finished = false;
 uint32_t flag = 0;
 
 Class_Motor_DJI_C620 motor_x_p;
+Class_Motor_DJI_C620 motor_x_m;
+Class_Motor_DJI_C620 motor_y_p;
+Class_Motor_DJI_C620 motor_y_m;
+Chassis chassis;
+
+bool flag_chassisTIM_1ms = false;
+
+bool readFlag(bool& flag){
+    bool flagTemp = flag;
+    flag = false;
+    return flagTemp;
+}
 
 void Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 {
@@ -61,6 +75,11 @@ void Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
         break;
     }
     }
+}
+
+void HAL_SYSTICK_Callback(void)
+{
+    flag_chassisTIM_1ms = true;
 }
 
 /**
@@ -80,7 +99,13 @@ void Task_Init()
  *
  */
 void Task_Loop()
-{	
+{
+	Debug_Cmd_Poll_Callback();
+
+    if(readFlag(flag_chassisTIM_1ms))
+        chassis.TIM_1ms_Calculate_PeriodElapsedCallback();
+
+
 }
 
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/

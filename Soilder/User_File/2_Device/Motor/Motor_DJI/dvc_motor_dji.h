@@ -473,6 +473,8 @@ public:
 
     inline float Get_Feedforward_Current();
 
+    inline Struct_Motor_DJI_Rx_Data& Get_Rx_Data();
+
     inline void Set_Control_Method(Enum_Motor_DJI_Control_Method __Motor_DJI_Control_Method);
 
     inline void Set_Target_Angle(float __Target_Angle);
@@ -1287,6 +1289,10 @@ inline float Class_Motor_DJI_C620::Get_Feedforward_Omega()
 inline float Class_Motor_DJI_C620::Get_Feedforward_Current()
 {
     return (Feedforward_Current);
+}
+
+inline Struct_Motor_DJI_Rx_Data& Class_Motor_DJI_C620::Get_Rx_Data(){
+    return Rx_Data;
 }
 
 /**

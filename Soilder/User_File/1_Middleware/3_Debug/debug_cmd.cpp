@@ -1,57 +1,55 @@
 /**
  * @file debug_cmd.cpp
- * @brief 调试指令解析系统
- * @details 支持通过串口指令实时读写电机状态、调整 PID 参数（含变速积分与积分分离）
+ * @brief 调试指令解析系统实现
+ * @author 
+ * @date 2026-04-12
+ * * @details 
+ * 该系统支持通过字符串指令对机器人进行实时调参。
+ * 支持功能：
+ * 1. 读写大疆电机 (C620/C610等) 的目标值与状态。
+ * 2. 动态调整 PID 参数（支持位置环/速度环、变速积分、积分分离）。
+ * 3. 监控底盘世界坐标、目标速度及相位补偿。
  */
 
 #include "debug_cmd.h"
 #include <string>
 #include <sstream>
 #include <iostream>
-#include "2_Device/Motor/Motor_DJI/dvc_motor_dji.h"
 
-/* --- 类型转换工具函数 --- */
+/* 外部实例声明 */
+
+/* ========================================================================= */
+/* =                         1. 类型转换与字符串工具                         = */
+/* ========================================================================= */
 
 /**
- * @brief 基础转换模板：将字符串尝试转换为数值类型
- * @param s 输入字符串
- * @param result 转换结果存放引用
- * @return true 转换成功且无残留字符，false 格式错误或为空
+ * @brief 模板函数：将字符串安全转换为数值
+ * @return true 转换成功且无残留字符
  */
 template <typename T>
-bool tryStringToNumber(const std::string& s, T& result) {
+static bool tryStringToNumber(const std::string &s, T &result) {
     if (s.empty()) return false;
     std::stringstream ss(s);
-    // 读入目标类型并检查是否到达流末尾，防止 "123a" 这种非法数据
     return (ss >> result) && (ss.eof());
 }
 
-// 转换为 int16_t (针对索引等整数)
-bool toNumber(const std::string& s, int16_t& val) {
-    return tryStringToNumber(s, val);
-}
+bool toNumber(const std::string &s, int16_t &val)  { return tryStringToNumber(s, val); }
+bool toNumber(const std::string &s, float &val)    { return tryStringToNumber(s, val); }
 
-// 转换为 uint16_t (针对电机ID，带负号检查)
-bool toNumber(const std::string& s, uint16_t& val) {
+/** @brief 转换为 uint16_t，增加负号检查防止溢出错误 */
+bool toNumber(const std::string &s, uint16_t &val) {
     if (!s.empty() && s[0] == '-') return false;
     return tryStringToNumber(s, val);
 }
 
-// 转换为 float (针对PID参数、角度、电流等)
-bool toNumber(const std::string& s, float& val) {
-    return tryStringToNumber(s, val);
-}
-
-/* --- 指令预处理函数 --- */
-
 /**
- * @brief 将原始字符串按空格切分为子字符串数组
- * @param src 原始输入行
- * @param subSrcList 存放切分结果的数组
+ * @brief 指令切分函数
+ * @param src 原始字符串（如 "motor get 0 p"）
+ * @param subSrcList 存放切分后单词的数组
  * @param maxCount 最大切分数量
- * @param actualCount 实际切分出的单词数
+ * @param actualCount 实际切分出的单词数引用
  */
-void splitCmd(const std::string& src, std::string subSrcList[], uint8_t maxCount, uint8_t& actualCount) {
+void splitCmd(const std::string &src, std::string subSrcList[], uint8_t maxCount, uint8_t &actualCount) {
     std::stringstream ss(src);
     std::string item;
     actualCount = 0;
@@ -61,218 +59,259 @@ void splitCmd(const std::string& src, std::string subSrcList[], uint8_t maxCount
 }
 
 /**
- * @brief 在给定的指令类中查找匹配项
- * @param subSrc 待匹配的单词
- * @param cmdClass 指令定义对象（含字符串列表和长度）
- * @return uint8_t 匹配到的索引+1 (对应枚举值)，未找到返回 0 (error)
+ * @brief 在命令字典中查找匹配的枚举索引
+ * @return 匹配到的枚举值 (Index + 1)，失败返回 0
  */
-uint8_t findCmd(const std::string& subSrc, const CmdClass* const cmdClass) {
+uint8_t findCmd(const std::string &subSrc, const CmdClass *const cmdClass) {
     for (uint8_t i = 0; i < cmdClass->cmdStrLength; i++) {
-        if (subSrc == cmdClass->cmdStr[i]) {
-            return i + 1; // 匹配成功，返回非零枚举值
+        if (subSrc == cmdClass->cmdStr[i]) return i + 1;
+    }
+    return 0;
+}
+
+/* ========================================================================= */
+/* =                         2. 交互反馈与帮助系统                         = */
+/* ========================================================================= */
+
+/** @brief 处理未知指令并打印提示信息 */
+void errorHandle(const char *lastCmd, const CmdClass *const cmdClass) {
+    if (lastCmd != nullptr && cmdClass != nullptr) {
+        printf("错误: 未知指令。 [%s] 的子指令应为:\r\n", lastCmd);
+        for (uint8_t i = 0; i < cmdClass->cmdStrLength; i++) {
+            printf("  > %s\r\n", cmdClass->cmdStr[i]);
         }
-    }
-    return 0; // 匹配失败，对应枚举中的 error
-}
-
-/* --- 错误提示与帮助 --- */
-
-/**
- * @brief 统一错误反馈处理
- * @param lastCmd 上一级指令名称
- * @param cmdClass 当前预期的子指令集
- */
-void errorHandle(const char* lastCmd, const CmdClass* const cmdClass){
-    if(lastCmd != nullptr){
-        printf("未知指令，%s 的下级指令应当为以下：\r\n", lastCmd);
-        for(uint8_t i = 0; i < cmdClass->cmdStrLength; i ++){
-            printf("  - %s\r\n", cmdClass->cmdStr[i]);
-        }
-    }
-    else{
-        printf("未知指令，请输入 .help 查看根指令集\r\n");
+    } else {
+        printf("未知指令！输入 '.help' 查看根指令集。\r\n");
     }
 }
 
-/**
- * @brief 打印顶层指令帮助列表
- */
-inline void Cmd_help(){
-    printf("可用根指令列表：\r\n");
-    for(uint8_t i = 0; i < CmdTopList.cmdStrLength; i ++){
-        printf(" [%d] %s\r\n", i+1, CmdTopList.cmdStr[i]);
+/** @brief 打印根指令帮助列表 */
+inline void Cmd_help() {
+    printf("--- 可用根指令列表 ---\r\n");
+    for (uint8_t i = 0; i < CmdTopList.cmdStrLength; i++) {
+        printf(" [%d] %s\r\n", i + 1, CmdTopList.cmdStr[i]);
     }
 }
 
-/* --- 电机底层操作函数 (Getter/Setter) --- */
-
-extern Class_Motor_DJI_C620 motor_x_p; // 挂载的电机实例
-
-// 目标状态读取
-inline void cmd_motor_get_target_angle(uint16_t motorNumber)   { printf("电机%d 目标角度: %f\r\n", motorNumber, motor_x_p.Get_Target_Angle()); }
-inline void cmd_motor_get_target_omega(uint16_t motorNumber)   { printf("电机%d 目标角速度: %f\r\n", motorNumber, motor_x_p.Get_Target_Omega()); }
-inline void cmd_motor_get_target_current(uint16_t motorNumber) { printf("电机%d 目标电流: %f\r\n", motorNumber, motor_x_p.Get_Target_Current()); }
-
-// 实时状态读取
-inline void cmd_motor_get_current_angle(uint16_t motorNumber)   { printf("电机%d 当前角度: %f\r\n", motorNumber, motor_x_p.Get_Now_Angle()); }
-inline void cmd_motor_get_current_omega(uint16_t motorNumber)   { printf("电机%d 当前角速度: %f\r\n", motorNumber, motor_x_p.Get_Now_Omega()); }
-inline void cmd_motor_get_current_current(uint16_t motorNumber) { printf("电机%d 当前电流: %f\r\n", motorNumber, motor_x_p.Get_Now_Current()); }
-inline void cmd_motor_get_now_power(uint16_t motorNumber)       { printf("电机%d 实时功率: %f W\r\n", motorNumber, motor_x_p.Get_Now_Power()); }
-
-// 目标状态写入
-inline void cmd_motor_put_target_angle(uint16_t motorNumber, float angle)     { motor_x_p.Set_Target_Angle(angle); printf("OK. 电机%d 目标角度 -> %f\r\n", motorNumber, angle); }
-inline void cmd_motor_put_target_omega(uint16_t motorNumber, float omega)     { motor_x_p.Set_Target_Omega(omega); printf("OK. 电机%d 目标角速度 -> %f\r\n", motorNumber, omega); }
-inline void cmd_motor_put_target_current(uint16_t motorNumber, float current) { motor_x_p.Set_Target_Current(current); printf("OK. 电机%d 目标电流 -> %f\r\n", motorNumber, current); }
-
-/* --- 核心业务逻辑处理器 --- */
+/* ========================================================================= */
+/* =                         3. PID 参数核心处理单元                        = */
+/* ========================================================================= */
 
 /**
- * @brief 专门处理 PID 相关的参数读写
- * @param pid 目标 PID 对象的引用
- * @param op "get" 或 "put"
- * @param paramStr 参数名称字符串（p, i, d, speed_a 等）
- * @param value 如果是 put 操作，传入的新值
+ * @brief PID 参数统一读写接口
+ * @param pid 目标 PID 类引用
+ * @param op 操作类型 ("get" 或 "put")
+ * @param paramStr 参数项字符串 (如 "p", "i", "speed_a")
+ * @param value 写入值 (仅在 put 时有效)
  */
-inline void handle_pid_param_op(Class_PID& pid, const std::string& op, const std::string& paramStr, float value) {
+inline void handle_pid_param_op(Class_PID &pid, const std::string &op, const std::string &paramStr, float value) {
     auto paramIdx = static_cast<EnumCmdPIDParamList>(findCmd(paramStr, &CmdPIDParamList));
 
     if (op == "get") {
         switch (paramIdx) {
-            case EnumCmdPIDParamList::p:         printf("P: %f\r\n", pid.Get_K_P()); break;
-            case EnumCmdPIDParamList::i:         printf("I: %f\r\n", pid.Get_K_I()); break;
-            case EnumCmdPIDParamList::d:         printf("D: %f\r\n", pid.Get_K_D()); break;
-            case EnumCmdPIDParamList::f:         printf("F: %f\r\n", pid.Get_K_F()); break;
-            case EnumCmdPIDParamList::i_limit:   printf("积分限幅: %f\r\n", pid.Get_I_Out_Max()); break;
-            case EnumCmdPIDParamList::out_limit: printf("输出限幅: %f\r\n", pid.Get_Out_Max()); break;
-            case EnumCmdPIDParamList::dead_zone: printf("控制死区: %f\r\n", pid.Get_Dead_Zone()); break;
-            case EnumCmdPIDParamList::speed_a:   printf("变速积分阈值A: %f\r\n", pid.Get_I_Variable_Speed_A()); break;
-            case EnumCmdPIDParamList::speed_b:   printf("变速积分区间B: %f\r\n", pid.Get_I_Variable_Speed_B()); break;
-            case EnumCmdPIDParamList::separate:  printf("积分分离阈值: %f\r\n", pid.Get_I_Separate_Threshold()); break;
-            default: printf("错误: 未知的 PID 参数项\r\n"); break;
+            case EnumCmdPIDParamList::p:          printf("P: %f\r\n", pid.Get_K_P()); break;
+            case EnumCmdPIDParamList::i:          printf("I: %f\r\n", pid.Get_K_I()); break;
+            case EnumCmdPIDParamList::d:          printf("D: %f\r\n", pid.Get_K_D()); break;
+            case EnumCmdPIDParamList::f:          printf("F: %f\r\n", pid.Get_K_F()); break;
+            case EnumCmdPIDParamList::i_limit:    printf("积分限幅: %f\r\n", pid.Get_I_Out_Max()); break;
+            case EnumCmdPIDParamList::out_limit:  printf("输出限幅: %f\r\n", pid.Get_Out_Max()); break;
+            case EnumCmdPIDParamList::dead_zone:  printf("控制死区: %f\r\n", pid.Get_Dead_Zone()); break;
+            case EnumCmdPIDParamList::speed_a:    printf("变速积分阈值A: %f\r\n", pid.Get_I_Variable_Speed_A()); break;
+            case EnumCmdPIDParamList::speed_b:    printf("变速积分区间B: %f\r\n", pid.Get_I_Variable_Speed_B()); break;
+            case EnumCmdPIDParamList::separate:   printf("积分分离阈值: %f\r\n", pid.Get_I_Separate_Threshold()); break;
+            default: printf("错误: PID 参数项 [%s] 不存在\r\n", paramStr.c_str()); break;
         }
-    } else { // put 操作
+    } else { // put
         switch (paramIdx) {
-            case EnumCmdPIDParamList::p:         pid.Set_K_P(value); break;
-            case EnumCmdPIDParamList::i:         pid.Set_K_I(value); break;
-            case EnumCmdPIDParamList::d:         pid.Set_K_D(value); break;
-            case EnumCmdPIDParamList::f:         pid.Set_K_F(value); break;
-            case EnumCmdPIDParamList::i_limit:   pid.Set_I_Out_Max(value); break;
-            case EnumCmdPIDParamList::out_limit: pid.Set_Out_Max(value); break;
-            case EnumCmdPIDParamList::dead_zone: pid.Set_Dead_Zone(value); break;
-            case EnumCmdPIDParamList::speed_a:   pid.Set_I_Variable_Speed_A(value); break;
-            case EnumCmdPIDParamList::speed_b:   pid.Set_I_Variable_Speed_B(value); break;
-            case EnumCmdPIDParamList::separate:  pid.Set_I_Separate_Threshold(value); break;
+            case EnumCmdPIDParamList::p:          pid.Set_K_P(value); break;
+            case EnumCmdPIDParamList::i:          pid.Set_K_I(value); break;
+            case EnumCmdPIDParamList::d:          pid.Set_K_D(value); break;
+            case EnumCmdPIDParamList::f:          pid.Set_K_F(value); break;
+            case EnumCmdPIDParamList::i_limit:    pid.Set_I_Out_Max(value); break;
+            case EnumCmdPIDParamList::out_limit:  pid.Set_Out_Max(value); break;
+            case EnumCmdPIDParamList::dead_zone:  pid.Set_Dead_Zone(value); break;
+            case EnumCmdPIDParamList::speed_a:    pid.Set_I_Variable_Speed_A(value); break;
+            case EnumCmdPIDParamList::speed_b:    pid.Set_I_Variable_Speed_B(value); break;
+            case EnumCmdPIDParamList::separate:   pid.Set_I_Separate_Threshold(value); break;
             default: printf("错误: PID 参数设置失败\r\n"); return;
         }
-        printf("Success: PID 参数已更新并生效\r\n");
+        printf("Success: 参数已更新。\r\n");
     }
 }
 
+/* ========================================================================= */
+/* =                         4. 电机指令业务处理                           = */
+/* ========================================================================= */
+
 /**
- * @brief 解析 motor get 指令逻辑
- * 指令格式 1: motor get <ID> <StateName>
- * 指令格式 2: motor get <ID> <angle/omega> <PidParam>
+ * @brief 处理 motor get 指令
+ * 格式: motor get <ID> <StateName> 或 motor get <ID> <angle/omega> <PidParam>
  */
 inline void handle_motor_get(const std::string subSrcList[], uint8_t count) {
-    if (count < 4) return;
+    if (count < 4) {
+        printf("用法: motor get <ID(0-3)> <State/PIDType> [Param]\r\n");
+        return;
+    }
 
     uint16_t motorNumber;
-    if (!toNumber(subSrcList[2], motorNumber) || motorNumber >= 4) return;
+    // 转换并检查 ID 是否合法
+    if (!toNumber(subSrcList[2], motorNumber) || motorNumber >= MOTOR_COUNT) {
+        printf("错误: 电机 ID %d 不存在 (有效范围: 0-%d)\r\n", motorNumber, MOTOR_COUNT - 1);
+        return;
+    }
 
-    // 优先识别是否为 PID 环路标识 (angle/omega)
+    // 获取目标电机指针
+    Class_Motor_DJI_C620* targetMotor = motor_list[motorNumber];
+
     auto pidType = static_cast<EnumCmdPIDTypeList>(findCmd(subSrcList[3], &CmdPIDTypeList));
-    
     if (pidType != EnumCmdPIDTypeList::error) {
-        if (count < 5) { printf("用法: motor get <ID> <angle/omega> <param>\r\n"); return; }
-        Class_PID& targetPid = (pidType == EnumCmdPIDTypeList::angle) ? motor_x_p.PID_Angle : motor_x_p.PID_Omega;
+        if (count < 5) return;
+        // 根据 ID 动态选择该电机的 PID 环路
+        Class_PID &targetPid = (pidType == EnumCmdPIDTypeList::angle) ? targetMotor->PID_Angle : targetMotor->PID_Omega;
         handle_pid_param_op(targetPid, "get", subSrcList[4], 0);
     } else {
-        // 普通状态读取
-        switch (static_cast<EnumCmdMotorStateList>(findCmd(subSrcList[3], &CmdMotorStateList))) {
-            case EnumCmdMotorStateList::target_angle:    cmd_motor_get_target_angle(motorNumber);    break;
-            case EnumCmdMotorStateList::target_omega:    cmd_motor_get_target_omega(motorNumber);    break;
-            case EnumCmdMotorStateList::target_current:  cmd_motor_get_target_current(motorNumber);  break;
-            case EnumCmdMotorStateList::current_angle:   cmd_motor_get_current_angle(motorNumber);   break;
-            case EnumCmdMotorStateList::current_omega:   cmd_motor_get_current_omega(motorNumber);   break;
-            case EnumCmdMotorStateList::current_current: cmd_motor_get_current_current(motorNumber); break;
-            case EnumCmdMotorStateList::current_power:   cmd_motor_get_now_power(motorNumber);       break;
+        auto state = static_cast<EnumCmdMotorStateList>(findCmd(subSrcList[3], &CmdMotorStateList));
+        switch (state) {
+            case EnumCmdMotorStateList::target_angle:    printf("电机%d 目标角度: %f\r\n", motorNumber, targetMotor->Get_Target_Angle()); break;
+            case EnumCmdMotorStateList::target_omega:    printf("电机%d 目标速度: %f\r\n", motorNumber, targetMotor->Get_Target_Omega()); break;
+            case EnumCmdMotorStateList::current_angle:   printf("电机%d 当前角度: %f\r\n", motorNumber, targetMotor->Get_Now_Angle()); break;
+            case EnumCmdMotorStateList::current_omega:   printf("电机%d 当前速度: %f\r\n", motorNumber, targetMotor->Get_Now_Omega()); break;
+            case EnumCmdMotorStateList::current_power:   printf("电机%d 实时功率: %f W\r\n", motorNumber, targetMotor->Get_Now_Power()); break;
             default: errorHandle("motor get", &CmdMotorStateList); break;
         }
     }
 }
 
-/**
- * @brief 解析 motor put 指令逻辑
- * 指令格式 1: motor put <ID> <StateName> <Value>
- * 指令格式 2: motor put <ID> <angle/omega> <PidParam> <Value>
- */
 inline void handle_motor_put(const std::string subSrcList[], uint8_t count) {
-    if (count < 5) return;
-
-    uint16_t motorNumber;
-    if (!toNumber(subSrcList[2], motorNumber) || motorNumber >= 4) return;
-
-    auto pidType = static_cast<EnumCmdPIDTypeList>(findCmd(subSrcList[3], &CmdPIDTypeList));
-
-    if (pidType != EnumCmdPIDTypeList::error) {
-        if (count < 6) { printf("用法: motor put <ID> <angle/omega> <param> <value>\r\n"); return; }
-        float val;
-        if (!toNumber(subSrcList[5], val)) return;
-        Class_PID& targetPid = (pidType == EnumCmdPIDTypeList::angle) ? motor_x_p.PID_Angle : motor_x_p.PID_Omega;
-        handle_pid_param_op(targetPid, "put", subSrcList[4], val);
-    } else {
-        float motorValue;
-        if (!toNumber(subSrcList[4], motorValue)) return;
-        switch (static_cast<EnumCmdMotorStateList>(findCmd(subSrcList[3], &CmdMotorStateList))) {
-            case EnumCmdMotorStateList::target_angle:   cmd_motor_put_target_angle(motorNumber, motorValue);   break;
-            case EnumCmdMotorStateList::target_omega:   cmd_motor_put_target_omega(motorNumber, motorValue);   break;
-            case EnumCmdMotorStateList::target_current: cmd_motor_put_target_current(motorNumber, motorValue); break;
-            default: errorHandle("motor put", &CmdMotorStateList); break;
-        }
-    }
-}
-
-/**
- * @brief 电机类指令分发器
- */
-inline void handle_motor_cmd(const std::string subSrcList[], uint8_t count) {
-    if (count < 2) {
-        errorHandle("motor", &CmdMotoList);
+    if (count < 5) {
+        printf("用法: motor put <ID> <State/PIDType> <Val/Param> [Val]\r\n");
         return;
     }
 
-    switch (static_cast<EnumCmdMotorList>(findCmd(subSrcList[1], &CmdMotoList))) {
-        case EnumCmdMotorList::get:   handle_motor_get(subSrcList, count); break;
-        case EnumCmdMotorList::put:   handle_motor_put(subSrcList, count); break;
-        default:                      errorHandle("motor", &CmdMotoList);  break;
+    uint16_t motorNumber;
+    if (!toNumber(subSrcList[2], motorNumber) || motorNumber >= MOTOR_COUNT) {
+        printf("错误: 电机 ID 无效\r\n");
+        return;
+    }
+
+    Class_Motor_DJI_C620* targetMotor = motor_list[motorNumber];
+
+    auto pidType = static_cast<EnumCmdPIDTypeList>(findCmd(subSrcList[3], &CmdPIDTypeList));
+    if (pidType != EnumCmdPIDTypeList::error) {
+        if (count < 6) return;
+        float val;
+        if (!toNumber(subSrcList[5], val)) return;
+        Class_PID &targetPid = (pidType == EnumCmdPIDTypeList::angle) ? targetMotor->PID_Angle : targetMotor->PID_Omega;
+        handle_pid_param_op(targetPid, "put", subSrcList[4], val);
+    } else {
+        float val;
+        if (!toNumber(subSrcList[4], val)) return;
+        auto state = static_cast<EnumCmdMotorStateList>(findCmd(subSrcList[3], &CmdMotorStateList));
+        switch (state) {
+            case EnumCmdMotorStateList::target_angle: targetMotor->Set_Target_Angle(val); break;
+            case EnumCmdMotorStateList::target_omega: targetMotor->Set_Target_Omega(val); break;
+            default: errorHandle("motor put", &CmdMotorStateList); return;
+        }
+        printf("OK. 电机%d 设置成功\r\n", motorNumber);
     }
 }
 
-/* --- 主入口函数 --- */
+/** @brief 电机指令二级分发 */
+inline void handle_motor_cmd(const std::string subSrcList[], uint8_t count) {
+    if (count < 2) { errorHandle("motor", &CmdMotoList); return; }
+
+    auto subCmd = static_cast<EnumCmdMotorList>(findCmd(subSrcList[1], &CmdMotoList));
+    if (subCmd == EnumCmdMotorList::get)      handle_motor_get(subSrcList, count);
+    else if (subCmd == EnumCmdMotorList::put) handle_motor_put(subSrcList, count);
+    else                                      errorHandle("motor", &CmdMotoList);
+}
+
+/* ========================================================================= */
+/* =                         5. 底盘指令业务处理                           = */
+/* ========================================================================= */
+
+/** @brief 处理 chassis get 指令 */
+inline void handle_chassis_get(const std::string subSrcList[], uint8_t count) {
+    if (count < 3) { errorHandle("chassis get", &CmdChassisStateList); return; }
+
+    auto stateIdx = static_cast<EnumCmdChassisStateList>(findCmd(subSrcList[2], &CmdChassisStateList));
+    switch (stateIdx) {
+        case EnumCmdChassisStateList::now_angle:
+            printf("当前角度: %.4f rad (%.2f°)\r\n", chassis.m_worldPosition.getAngle(), chassis.m_worldPosition.getAngle() * 57.3f);
+            break;
+        case EnumCmdChassisStateList::target_v:
+            printf("目标速: VX:%.2f, VY:%.2f, VW:%.2f\r\n", chassis.Get_Target_VX(), chassis.Get_Target_VY(), chassis.Get_Target_VW());
+            break;
+        case EnumCmdChassisStateList::world_frame:
+            printf("坐标系模式: %s\r\n", chassis.Get_World_Frame_Status() ? "World" : "Relative");
+            break;
+        case EnumCmdChassisStateList::delay_comp:
+            printf("相位补偿: %.2f ms\r\n", chassis.Get_Delay_Comp_Ms());
+            break;
+        default: errorHandle("chassis get", &CmdChassisStateList); break;
+    }
+}
+
+/** @brief 处理 chassis put 指令 */
+inline void handle_chassis_put(const std::string subSrcList[], uint8_t count) {
+    if (count < 4) { printf("用法: chassis put <target_v/delay_comp/world_frame> ...\r\n"); return; }
+
+    auto stateIdx = static_cast<EnumCmdChassisStateList>(findCmd(subSrcList[2], &CmdChassisStateList));
+    switch (stateIdx) {
+        case EnumCmdChassisStateList::target_v: {
+            float vx, vy, vw;
+            if (count >= 6 && toNumber(subSrcList[3], vx) && toNumber(subSrcList[4], vy) && toNumber(subSrcList[5], vw)) {
+                chassis.Set_Target_VX(vx); chassis.Set_Target_VY(vy); chassis.Set_Target_VW(vw);
+                printf("OK. 速度已更新\r\n");
+            }
+            break;
+        }
+        case EnumCmdChassisStateList::delay_comp: {
+            float ms;
+            if (toNumber(subSrcList[3], ms)) { chassis.Set_Delay_Comp_Ms(ms); printf("OK. 补偿已更新\r\n"); }
+            break;
+        }
+        case EnumCmdChassisStateList::world_frame: {
+            float val;
+            if (toNumber(subSrcList[3], val)) { chassis.Set_World_Frame_Status(val > 0.5f); printf("OK. 模式已切换\r\n"); }
+            break;
+        }
+        default: printf("错误: 不支持修改或格式错误\r\n"); break;
+    }
+}
+
+/** @brief 底盘指令二级分发 */
+inline void handle_chassis_cmd(const std::string subSrcList[], uint8_t count) {
+    if (count < 2) { errorHandle("chassis", &CmdChassisList); return; }
+
+    auto subCmd = static_cast<EnumCmdChassisList>(findCmd(subSrcList[1], &CmdChassisList));
+    if (subCmd == EnumCmdChassisList::get)      handle_chassis_get(subSrcList, count);
+    else if (subCmd == EnumCmdChassisList::put) handle_chassis_put(subSrcList, count);
+    else                                      errorHandle("chassis", &CmdChassisList);
+}
+
+/* ========================================================================= */
+/* =                         6. 主入口解析函数                             = */
+/* ========================================================================= */
 
 /**
- * @brief 调试指令解析总入口
- * @param src 串口接收到的完整字符串行
+ * @brief 调试解析总入口
+ * @param src 串口接收到的原始字符串行
  */
 void anysisCmd(const std::string src) {
-    std::string subSrcList[8]; // 最大支持 8 个单词的复合指令
+    std::string subSrcList[8]; 
     uint8_t count = 0;
+    
+    // 1. 切分指令
     splitCmd(src, subSrcList, 8, count);
-
     if (count == 0) return;
 
-    // 匹配顶级指令 (motor, .help 等)
-    switch (static_cast<EnumCmdList>(findCmd(subSrcList[0], &CmdTopList))) {
-        case EnumCmdList::motor:
-            handle_motor_cmd(subSrcList, count);
-            break;
-
-        case EnumCmdList::help:
-            Cmd_help();
-            break;
-
-        default:
-            errorHandle(nullptr, nullptr); // 未识别的顶级指令
-            break;
+    // 2. 顶级指令分发
+    auto rootIdx = static_cast<EnumCmdList>(findCmd(subSrcList[0], &CmdTopList));
+    switch (rootIdx) {
+        case EnumCmdList::motor:   handle_motor_cmd(subSrcList, count);   break;
+        case EnumCmdList::chassis: handle_chassis_cmd(subSrcList, count); break;
+        case EnumCmdList::help:    Cmd_help();                            break;
+        default:                   errorHandle(nullptr, nullptr);         break;
     }
 }
