@@ -27,7 +27,6 @@
 #include "usb_device.h"
 #include "gpio.h"
 
-
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "5_Task/tsk_config_and_callback.h"
@@ -69,11 +68,11 @@
 		
 		putchar_length++;
 
-		// ´¥·¢Ìõ¼þ£º´Õ¹»128×Ö½Ú
+		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õ¹ï¿½128ï¿½Ö½ï¿½
 		if (putchar_length >= 128) {
-			// ×èÈûÖ±µ½Ó²¼þ¾ÍÐ÷
+			// ï¿½ï¿½ï¿½ï¿½Ö±ï¿½ï¿½Ó²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 			while (CDC_Transmit_FS(putchar_buff, putchar_length) == USBD_BUSY);
-			// ·¢ÍêÒ»¶¨ÒªÇåÁã³¤¶È£¬ÏÂ´Î½øÈëÊ±»áÖØÐÂ´¥·¢ startTime ¸üÐÂ
+			// ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½Òªï¿½ï¿½ï¿½ã³¤ï¿½È£ï¿½ï¿½Â´Î½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½Â´ï¿½ï¿½ï¿½ startTime ï¿½ï¿½ï¿½ï¿½
 			putchar_length = 0;
 		}
 	}
@@ -86,7 +85,7 @@
 	}
 
 	void ttywrch(int ch) {
-		uint8_t data = (uint8_t)ch; // ÏÔÊ½×ª»»£¬È·±£Ö»È¡µÍ8Î»
+		uint8_t data = (uint8_t)ch; // ï¿½ï¿½Ê½×ªï¿½ï¿½ï¿½ï¿½È·ï¿½ï¿½Ö»È¡ï¿½ï¿½8Î»
 		while (CDC_Transmit_FS(&data, 1) == USBD_BUSY);
 	}
 	
@@ -160,7 +159,7 @@ int main(void)
   MX_USART3_UART_Init();
   MX_USART6_UART_Init();
   MX_USB_DEVICE_Init();
-//  MX_IWDG_Init();
+  MX_IWDG_Init();
   /* USER CODE BEGIN 2 */
   Task_Init();
   /* USER CODE END 2 */
@@ -169,9 +168,9 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	 Task_Loop();
     /* USER CODE END WHILE */
-	  Task_Loop();
-	  check_putchar();
+	
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -245,3 +244,19 @@ void Error_Handler(void)
   }
   /* USER CODE END Error_Handler_Debug */
 }
+#ifdef USE_FULL_ASSERT
+/**
+  * @brief  Reports the name of the source file and the source line number
+  *         where the assert_param error has occurred.
+  * @param  file: pointer to the source file name
+  * @param  line: assert_param error line source number
+  * @retval None
+  */
+void assert_failed(uint8_t *file, uint32_t line)
+{
+  /* USER CODE BEGIN 6 */
+  /* User can add his own implementation to report the file name and line number,
+     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+  /* USER CODE END 6 */
+}
+#endif /* USE_FULL_ASSERT */

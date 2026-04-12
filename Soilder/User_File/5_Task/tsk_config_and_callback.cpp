@@ -39,6 +39,8 @@
 #include "2_Device/Motor/Motor_DJI/dvc_motor_dji.h"
 #include "1_Middleware/3_Debug/debug_cmd_interface.h"
 #include "3_Chariot/1_Module/Chassis/crt_chassis.h"
+#include "1_Middleware/1_Driver/TIM/drv_tim.h"
+#include "2_Device/DR16/dvc_dr16.h"
 
 /* Private macros ------------------------------------------------------------*/
 
@@ -56,7 +58,10 @@ Class_Motor_DJI_C620 motor_y_p;
 Class_Motor_DJI_C620 motor_y_m;
 Chassis chassis;
 
+Class_DR16 dr16;
+
 bool flag_chassisTIM_1ms = false;
+bool flag_dr16TIM_1ms = false;
 
 bool readFlag(bool& flag){
     bool flagTemp = flag;
@@ -71,15 +76,39 @@ void Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
     case (0x201):
     {
         motor_x_p.CAN_RxCpltCallback(CAN_RxMessage->Data);
+    }
+    break;
+    case (0x202):
+    {
+        motor_x_m.CAN_RxCpltCallback(CAN_RxMessage->Data);
+    }
+    break;
+    case (0x203):
+    {
+        motor_y_p.CAN_RxCpltCallback(CAN_RxMessage->Data);
+    }
+    break;
+    case (0x204):
+    {
+        motor_y_m.CAN_RxCpltCallback(CAN_RxMessage->Data);
+    }
+    break;
+    }
+}
 
-        break;
-    }
-    }
+void Device_UART_RxCpltCallback(uint8_t *Rx_Data, uint16_t Length){
+    dr16.UART_RxCpltCallback(Rx_Data, Length);
 }
 
 void HAL_SYSTICK_Callback(void)
 {
     flag_chassisTIM_1ms = true;
+    flag_dr16TIM_1ms = true;
+}
+
+void TIM_100ms_PeriodElapsedCallback(){
+    chassis.TIM_100ms_Alive_PeriodElapsedCallback();
+    dr16.TIM_100ms_Alive_PeriodElapsedCallback();
 }
 
 /**
@@ -89,9 +118,16 @@ void HAL_SYSTICK_Callback(void)
 void Task_Init()
 {
     CAN_Init(&hcan1, Device_CAN1_Callback);
+    TIM_Init(&htim3, TIM_100ms_PeriodElapsedCallback);
 
     motor_x_p.Init(&hcan1, Motor_DJI_ID_0x201);
+    motor_x_m.Init(&hcan1, Motor_DJI_ID_0x202);
+    motor_y_p.Init(&hcan1, Motor_DJI_ID_0x203);
+    motor_y_m.Init(&hcan1, Motor_DJI_ID_0x204);
     LOG_INFO("底盘电机初始化完成");
+
+    // UART_Init(&huart2, Device_UART_RxCpltCallback, UART_BUFFER_SIZE);
+    // dr16.Init(&huart2);
 }
 
 /**
@@ -102,10 +138,15 @@ void Task_Loop()
 {
 	Debug_Cmd_Poll_Callback();
 
-    if(readFlag(flag_chassisTIM_1ms))
-        chassis.TIM_1ms_Calculate_PeriodElapsedCallback();
-
-
+    if(readFlag(flag_chassisTIM_1ms)){
+        if(dr16.Get_Status() == DR16_Status_ENABLE){
+            chassis.Set_Control_Target(dr16.Get_Left_X(), dr16.Get_Left_Y(), dr16.Get_Right_X(), true);
+            chassis.TIM_1ms_Calculate_PeriodElapsedCallback();
+        }
+    }
+        
+    if(readFlag(flag_dr16TIM_1ms))
+        dr16.TIM_1ms_Calculate_PeriodElapsedCallback();
 }
 
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/

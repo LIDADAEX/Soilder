@@ -12,12 +12,14 @@
 
 #include "2_Device/Motor/Motor_DJI/dvc_motor_dji.h"
 #include "3_Chariot/1_Module/Chassis/crt_chassis.h"
+#include "2_Device/DR16/dvc_dr16.h"
 
 extern Class_Motor_DJI_C620 motor_x_p; // ID: 0
 extern Class_Motor_DJI_C620 motor_x_m; // ID: 1
 extern Class_Motor_DJI_C620 motor_y_p; // ID: 2
 extern Class_Motor_DJI_C620 motor_y_m; // ID: 3
 extern Chassis chassis;               // 底盘控制实例
+extern Class_DR16 dr16;
 
 /**
  * @brief 电机实例指针数组，将 ID 与具体对象绑定
@@ -44,8 +46,9 @@ static Class_Motor_DJI_C620* motor_list[] = {
 /** @brief 顶级根指令枚举 */
 enum class EnumCmdList : uint8_t {
     error = 0,
-    motor = 1,   // 电机调试
-    chassis = 2, // 底盘调试
+    motor,   // 电机调试
+    chassis, // 底盘调试
+    remote,
     help         // 帮助菜单
 };
 
@@ -103,6 +106,16 @@ enum class EnumCmdChassisStateList : uint8_t {
     delay_comp   // 相位延迟补偿时间 (ms)
 };
 
+enum class EnumCmdRemoteStateList : uint8_t {
+    error = 0,
+    stick,   // 一次性获取四个摇杆值
+};
+
+enum class EnumCmdRemoteList : uint8_t{
+    error = 0,
+    get, 
+};
+
 /* ========================================================================= */
 /* =                          2. 指令类定义与映射                          = */
 /* ========================================================================= */
@@ -118,7 +131,7 @@ public:
 
 /* --- 静态字符串数组 (词库) --- */
 
-static const char *topStrings[]          = {"motor", "chassis", "help"};
+static const char* topStrings[] = {"motor", "chassis", "remote", "help"};
 static const char *motorStrings[]        = {"get", "put"};
 static const char *motorStateStrings[]   = {"target_angle", "target_omega", "target_current", 
                                             "current_angle", "current_omega", "current_current", "current_power"};
@@ -128,6 +141,9 @@ static const char *PIDParamStrings[]     = {"p", "i", "d", "f", "i_limit", "out_
 static const char *chassisStrings[]      = {"get", "put"};
 static const char *chassisStateStrings[] = {"now_angle", "target_v", "world_frame", "delay_comp"};
 
+static const char* remoteStrings[] = {"get"};
+static const char* remoteStateStrings[] = {"stick"};
+
 /* --- 实例化指令对象 (供解析器查询) --- */
 
 static const CmdClass CmdTopList          = { topStrings,          CMD_COUNT(topStrings) };
@@ -136,7 +152,9 @@ static const CmdClass CmdMotorStateList   = { motorStateStrings,  CMD_COUNT(moto
 static const CmdClass CmdPIDTypeList      = { PIDTypeStrings,     CMD_COUNT(PIDTypeStrings) };
 static const CmdClass CmdPIDParamList     = { PIDParamStrings,    CMD_COUNT(PIDParamStrings) };
 static const CmdClass CmdChassisList      = { chassisStrings,     CMD_COUNT(chassisStrings) };
-static const CmdClass CmdChassisStateList = { chassisStateStrings, CMD_COUNT(chassisStateStrings) };
+static const CmdClass CmdChassisStateList = { chassisStateStrings,  CMD_COUNT(chassisStateStrings) };
+static const CmdClass CmdRemoteList       = { remoteStrings,         CMD_COUNT(remoteStrings)};
+static const CmdClass CmdRemoteStateList  = { remoteStateStrings,    CMD_COUNT(remoteStateStrings)};
 
 
 /* ========================================================================= */

@@ -290,6 +290,59 @@ inline void handle_chassis_cmd(const std::string subSrcList[], uint8_t count) {
     else                                      errorHandle("chassis", &CmdChassisList);
 }
 
+inline void handle_remote_get(const std::string subSrcList[], uint8_t count) {
+    if (count < 3) {
+        errorHandle("remote get", &CmdRemoteStateList);
+        return;
+    }
+
+    // 使用 findCmd 查找要获取的具体项
+    auto stateIdx = static_cast<EnumCmdRemoteStateList>(findCmd(subSrcList[2], &CmdRemoteStateList));
+
+    switch (stateIdx) {
+        case EnumCmdRemoteStateList::stick:
+            if (dr16.Get_Status() != DR16_Status_ENABLE) {
+                printf("Remote Offline!\r\n");
+                break;
+            }
+            printf("Stick_LX: %.3f, Stick_LY: %.3f | Stick_RX: %.3f, Stick_RY: %.3f\r\n",
+                   dr16.Get_Left_X(),  dr16.Get_Left_Y(),
+                   dr16.Get_Right_X(), dr16.Get_Right_Y());
+            break;
+
+        default:
+            errorHandle("remote get", &CmdRemoteStateList);
+            break;
+    }
+}
+
+/**
+ * @brief 遥控器指令顶级分发
+ */
+inline void handle_remote_cmd(const std::string subSrcList[], uint8_t count) {
+    if (count < 2) {
+        errorHandle("remote", &CmdRemoteList);
+        return;
+    }
+
+    // 使用 findCmd 查找动作 (get/put/...)
+    auto actionIdx = static_cast<EnumCmdRemoteList>(findCmd(subSrcList[1], &CmdRemoteList));
+
+    switch (actionIdx) {
+        case EnumCmdRemoteList::get:
+            handle_remote_get(subSrcList, count);
+            break;
+
+        // case EnumCmdRemoteList::put: 
+        //     handle_remote_put(subSrcList, count); // 以后扩展极其方便
+        //     break;
+
+        default:
+            errorHandle("remote", &CmdRemoteList);
+            break;
+    }
+}
+
 /* ========================================================================= */
 /* =                         6. 主入口解析函数                             = */
 /* ========================================================================= */
@@ -307,11 +360,13 @@ void anysisCmd(const std::string src) {
     if (count == 0) return;
 
     // 2. 顶级指令分发
-    auto rootIdx = static_cast<EnumCmdList>(findCmd(subSrcList[0], &CmdTopList));
-    switch (rootIdx) {
+    auto topCmd = static_cast<EnumCmdList>(findCmd(subSrcList[0], &CmdTopList));
+    
+    switch (topCmd) {
         case EnumCmdList::motor:   handle_motor_cmd(subSrcList, count);   break;
         case EnumCmdList::chassis: handle_chassis_cmd(subSrcList, count); break;
-        case EnumCmdList::help:    Cmd_help();                            break;
-        default:                   errorHandle(nullptr, nullptr);         break;
+        case EnumCmdList::remote:  handle_remote_cmd(subSrcList, count);  break; // 统一的分发风格
+        case EnumCmdList::help:    Cmd_help(); break;
+        default:                   errorHandle(nullptr, nullptr); break;
     }
 }
