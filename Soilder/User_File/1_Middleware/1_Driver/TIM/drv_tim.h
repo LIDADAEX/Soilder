@@ -30,9 +30,8 @@ typedef void (*TIM_Call_Back)();
  * @brief TIM定时器处理结构体
  *
  */
-struct Struct_TIM_Manage_Object
-{
-    TIM_HandleTypeDef *TIM_Handler;
+struct Struct_TIM_Manage_Object {
+    TIM_HandleTypeDef* TIM_Handler;
     TIM_Call_Back Callback_Function;
 };
 
@@ -62,7 +61,7 @@ extern Struct_TIM_Manage_Object TIM14_Manage_Object;
 
 /* Exported function declarations --------------------------------------------*/
 
-void TIM_Init(TIM_HandleTypeDef *htim, TIM_Call_Back Callback_Function);
+void TIM_Init(TIM_HandleTypeDef* htim, TIM_Call_Back Callback_Function);
 
 #endif
 

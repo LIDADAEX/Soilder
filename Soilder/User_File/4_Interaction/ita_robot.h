@@ -15,16 +15,16 @@
 
 /* Includes ------------------------------------------------------------------*/
 
-#include "3_Chariot/1_Module/Chassis/crt_chassis.h"
-#include "3_Chariot/1_Module/Gimbal/crt_gimbal.h"
-#include "3_Chariot/1_Module/Booster/crt_booster.h"
-#include "3_Chariot/2_Posture/Posture/crt_posture.h"
+#include "1_Middleware/2_Algorithm/Queue/alg_queue.h"
+#include "1_Middleware/2_Algorithm/Timer/alg_timer.h"
 #include "2_Device/DR16/dvc_dr16.h"
 #include "2_Device/Manifold/dvc_manifold.h"
-#include "2_Device/Supercap/Supercap_24/dvc_supercap_24.h"
 #include "2_Device/Referee/dvc_referee.h"
-#include "1_Middleware/2_Algorithm/Timer/alg_timer.h"
-#include "1_Middleware/2_Algorithm/Queue/alg_queue.h"
+#include "2_Device/Supercap/Supercap_24/dvc_supercap_24.h"
+#include "3_Chariot/1_Module/Booster/crt_booster.h"
+#include "3_Chariot/1_Module/Chassis/crt_chassis.h"
+#include "3_Chariot/1_Module/Gimbal/crt_gimbal.h"
+#include "3_Chariot/2_Posture/Posture/crt_posture.h"
 
 /* Exported macros -----------------------------------------------------------*/
 
@@ -34,8 +34,7 @@
  * @brief 长按左键状态类型
  *
  */
-enum Enum_FSM_Press_Hold_Status
-{
+enum Enum_FSM_Press_Hold_Status {
     FSM_Press_Hold_Status_STOP = 0,
     FSM_Press_Hold_Status_FREE,
     FSM_Press_Hold_Status_PRESSED,
@@ -47,8 +46,7 @@ enum Enum_FSM_Press_Hold_Status
  * @brief 热量自检测状态类型
  *
  */
-enum Enum_FSM_Heat_Detector_Status
-{
+enum Enum_FSM_Heat_Detector_Status {
     FSM_Heat_Detector_Status_CLOSE = 0,
     FSM_Heat_Detector_Status_OPEN,
 };
@@ -57,8 +55,7 @@ enum Enum_FSM_Heat_Detector_Status
  * @brief 底盘类型
  *
  */
-enum Enum_Robot_Chassis_Type
-{
+enum Enum_Robot_Chassis_Type {
     Robot_Chassis_Type_POWER = 0,
     Robot_Chassis_Type_HP,
 };
@@ -67,8 +64,7 @@ enum Enum_Robot_Chassis_Type
  * @brief 小陀螺类型
  *
  */
-enum Enum_Robot_Gyroscope_Type
-{
+enum Enum_Robot_Gyroscope_Type {
     Robot_Gyroscope_Type_DISABLE = 0,
     Robot_Gyroscope_Type_CLOCKWISE,
     Robot_Gyroscope_Type_COUNTERCLOCKWISE,
@@ -78,8 +74,7 @@ enum Enum_Robot_Gyroscope_Type
  * @brief 发射机构类型
  *
  */
-enum Enum_Robot_Booster_Type
-{
+enum Enum_Robot_Booster_Type {
     Robot_Booster_Type_BURST = 0,
     Robot_Booster_Type_CD,
 };
@@ -90,10 +85,9 @@ class Class_Robot;
  * @brief Specialized, 长按左键有限自动机
  *
  */
-class Class_FSM_Press_Hold : public Class_FSM
-{
-public:
-    Class_Robot *Robot;
+class Class_FSM_Press_Hold : public Class_FSM {
+   public:
+    Class_Robot* Robot;
 
     uint32_t Get_Default_Hold_Time_Threshold();
 
@@ -101,7 +95,7 @@ public:
 
     void TIM_1ms_Calculate_PeriodElapsedCallback();
 
-protected:
+   protected:
     // 初始化相关常量
 
     // 常量
@@ -127,10 +121,9 @@ protected:
  * @brief Specialized, 热量自检测有限自动机
  *
  */
-class Class_FSM_Heat_Detector : public Class_FSM
-{
-public:
-    Class_Robot *Robot;
+class Class_FSM_Heat_Detector : public Class_FSM {
+   public:
+    Class_Robot* Robot;
 
     float Get_Now_Heat();
 
@@ -138,7 +131,7 @@ public:
 
     void TIM_1ms_Calculate_PeriodElapsedCallback();
 
-protected:
+   protected:
     // 初始化相关常量
 
     // 常量
@@ -173,10 +166,8 @@ protected:
  * @brief 控制对象
  *
  */
-class Class_Robot
-{
-public:
-
+class Class_Robot {
+   public:
     // 长按左键有限自动机
     Class_FSM_Press_Hold FSM_DR16_Left_Mouse_Press_Hold;
 
@@ -254,7 +245,7 @@ public:
 
     void TIM_1ms_Calculate_Callback();
 
-protected:
+   protected:
     // 初始化相关常量
 
     // 常量
@@ -348,8 +339,7 @@ protected:
  *
  * @param __Hold_Time_Threshold 长按时间阈值, 超出被认为长按
  */
-inline void Class_FSM_Press_Hold::Set_Hold_Time_Threshold(uint32_t __Hold_Time_Threshold)
-{
+inline void Class_FSM_Press_Hold::Set_Hold_Time_Threshold(uint32_t __Hold_Time_Threshold) {
     Hold_Time_Threshold = __Hold_Time_Threshold;
 }
 
@@ -358,8 +348,7 @@ inline void Class_FSM_Press_Hold::Set_Hold_Time_Threshold(uint32_t __Hold_Time_T
  *
  * @param __Hold_Time_Threshold 长按时间阈值, 超出被认为长按
  */
-inline uint32_t Class_FSM_Press_Hold::Get_Default_Hold_Time_Threshold()
-{
+inline uint32_t Class_FSM_Press_Hold::Get_Default_Hold_Time_Threshold() {
     return (Default_Hold_Time_Threshold);
 }
 
@@ -368,8 +357,7 @@ inline uint32_t Class_FSM_Press_Hold::Get_Default_Hold_Time_Threshold()
  *
  * @return float 当前热量
  */
-inline float Class_FSM_Heat_Detector::Get_Now_Heat()
-{
+inline float Class_FSM_Heat_Detector::Get_Now_Heat() {
     return (Now_Heat);
 }
 
@@ -378,8 +366,7 @@ inline float Class_FSM_Heat_Detector::Get_Now_Heat()
  *
  * @return float 累计子弹数
  */
-inline uint32_t Class_FSM_Heat_Detector::Get_Total_Ammo_Num()
-{
+inline uint32_t Class_FSM_Heat_Detector::Get_Total_Ammo_Num() {
     return (Total_Ammo_Num);
 }
 

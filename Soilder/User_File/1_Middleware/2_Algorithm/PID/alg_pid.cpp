@@ -39,8 +39,18 @@
  * @param __I_Separate_Threshold 积分分离误差阈值
  * @param __D_First 是否开启微分先行
  */
-void Class_PID::Init(float __K_P, float __K_I, float __K_D, float __K_F, float __I_Out_Max, float __Out_Max, float __D_T, float __Dead_Zone, float __I_Variable_Speed_A, float __I_Variable_Speed_B, float __I_Separate_Threshold, Enum_PID_D_First __D_First)
-{
+void Class_PID::Init(float __K_P,
+                     float __K_I,
+                     float __K_D,
+                     float __K_F,
+                     float __I_Out_Max,
+                     float __Out_Max,
+                     float __D_T,
+                     float __Dead_Zone,
+                     float __I_Variable_Speed_A,
+                     float __I_Variable_Speed_B,
+                     float __I_Separate_Threshold,
+                     Enum_PID_D_First __D_First) {
     K_P = __K_P;
     K_I = __K_I;
     K_D = __K_D;
@@ -60,8 +70,7 @@ void Class_PID::Init(float __K_P, float __K_I, float __K_D, float __K_F, float _
  *
  * @return float 输出值
  */
-void Class_PID::TIM_Calculate_PeriodElapsedCallback()
-{
+void Class_PID::TIM_Calculate_PeriodElapsedCallback() {
     // P输出
     float p_out = 0.0f;
     // I输出
@@ -81,18 +90,13 @@ void Class_PID::TIM_Calculate_PeriodElapsedCallback()
     abs_error = Math_Abs(error);
 
     // 判断死区
-    if (abs_error < Dead_Zone)
-    {
+    if (abs_error < Dead_Zone) {
         Target = Now;
         error = 0.0f;
         abs_error = 0.0f;
-    }
-    else if (error > 0.0f && abs_error > Dead_Zone)
-    {
+    } else if (error > 0.0f && abs_error > Dead_Zone) {
         error -= Dead_Zone;
-    }
-    else if (error < 0.0f && abs_error > Dead_Zone)
-    {
+    } else if (error < 0.0f && abs_error > Dead_Zone) {
         error += Dead_Zone;
     }
 
@@ -102,49 +106,34 @@ void Class_PID::TIM_Calculate_PeriodElapsedCallback()
 
     // 计算i项
 
-    if (I_Variable_Speed_A == 0.0f && I_Variable_Speed_B == 0.0f)
-    {
+    if (I_Variable_Speed_A == 0.0f && I_Variable_Speed_B == 0.0f) {
         // 非变速积分
         speed_ratio = 1.0f;
-    }
-    else
-    {
+    } else {
         // 变速积分
-        if (abs_error <= I_Variable_Speed_A)
-        {
+        if (abs_error <= I_Variable_Speed_A) {
             speed_ratio = 1.0f;
-        }
-        else if (I_Variable_Speed_A < abs_error && abs_error < I_Variable_Speed_B)
-        {
+        } else if (I_Variable_Speed_A < abs_error && abs_error < I_Variable_Speed_B) {
             speed_ratio = (I_Variable_Speed_B - abs_error) / (I_Variable_Speed_B - I_Variable_Speed_A);
-        }
-        else if (abs_error >= I_Variable_Speed_B)
-        {
+        } else if (abs_error >= I_Variable_Speed_B) {
             speed_ratio = 0.0f;
         }
     }
     // 积分限幅
-    if (I_Out_Max != 0.0f)
-    {
+    if (I_Out_Max != 0.0f) {
         Math_Constrain(&Integral_Error, -I_Out_Max / K_I, I_Out_Max / K_I);
     }
-    if (I_Separate_Threshold == 0.0f)
-    {
+    if (I_Separate_Threshold == 0.0f) {
         // 没有积分分离
         Integral_Error += speed_ratio * D_T * error;
         i_out = K_I * Integral_Error;
-    }
-    else
-    {
+    } else {
         // 有积分分离
-        if (abs_error < I_Separate_Threshold)
-        {
+        if (abs_error < I_Separate_Threshold) {
             // 不在积分分离区间上
             Integral_Error += speed_ratio * D_T * error;
             i_out = K_I * Integral_Error;
-        }
-        else
-        {
+        } else {
             // 在积分分离区间上
             Integral_Error = 0.0f;
             i_out = 0.0f;
@@ -153,13 +142,10 @@ void Class_PID::TIM_Calculate_PeriodElapsedCallback()
 
     // 计算d项
 
-    if (D_First == PID_D_First_DISABLE)
-    {
+    if (D_First == PID_D_First_DISABLE) {
         // 没有微分先行
         d_out = K_D * (error - Pre_Error) / D_T;
-    }
-    else
-    {
+    } else {
         // 微分先行使能
         d_out = -K_D * (Now - Pre_Now) / D_T;
     }
@@ -173,8 +159,7 @@ void Class_PID::TIM_Calculate_PeriodElapsedCallback()
     Out = p_out + i_out + d_out + f_out;
 
     // 输出限幅
-    if (Out_Max != 0.0f)
-    {
+    if (Out_Max != 0.0f) {
         Math_Constrain(&Out, -Out_Max, Out_Max);
     }
 

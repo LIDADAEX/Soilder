@@ -1,0 +1,76 @@
+机器人实时调试指令手册 (v1.0)
+说明：指令不区分大小写，通过串口发送字符串即可。< > 表示必填参数，[ ] 表示可选参数。
+
+1. 电机调试 (motor)
+用于读写大疆电机（ID: 0-3）的状态及内部 PID 参数。
+
+读取参数 (get)
+
+motor get <ID> target_angle : 读取目标角度
+
+motor get <ID> target_omega : 读取目标转速
+
+motor get <ID> current_angle : 读取当前反馈角度
+
+motor get <ID> current_omega : 读取当前反馈转速
+
+motor get <ID> current_power : 读取实时输出功率 (W)
+
+motor get <ID> angle <PID_Param> : 读取位置环 PID 参数
+
+motor get <ID> omega <PID_Param> : 读取速度环 PID 参数
+
+设置参数 (put)
+
+motor put <ID> target_angle <Val> : 设置目标角度
+
+motor put <ID> target_omega <Val> : 设置目标转速
+
+motor put <ID> angle <PID_Param> <Val> : 修改位置环 PID 参数
+
+motor put <ID> omega <PID_Param> <Val> : 修改速度环 PID 参数
+
+PID 参数项 (PID_Param)：
+p, i, d, f, i_limit (积分限幅), out_limit (输出限幅), dead_zone (死区), speed_a (变速积分A), speed_b (变速积分B), separate (积分分离阈值)
+
+2. 底盘调试 (chassis)
+用于底盘坐标系切换、航位推算监控及相位补偿调试。
+
+读取状态 (get)
+
+chassis get now_angle : 获取航位推算出的世界角度
+
+chassis get target_v : 获取当前的 VX, VY, VW 目标值
+
+chassis get world_frame : 获取当前坐标系模式 (1:世界, 0:相对)
+
+chassis get delay_comp : 获取相位延迟补偿时间 (ms)
+
+chassis get deadzone : 获取底盘控制死区值
+
+chassis get correction : 获取航位推算打滑修正量
+
+chassis get raw_ticks : 获取底盘四个电机的原始编码器脉冲
+
+设置参数 (put)
+
+chassis put target_v <VX> <VY> <VW> : 强制设定底盘目标速度
+
+chassis put world_frame <1/0> : 切换世界坐标系模式
+
+chassis put delay_comp <Val> : 设置相位延迟补偿时长
+
+chassis put deadzone <Val> : 修改底盘控制死区阈值
+
+3. 遥控器监控 (remote)
+remote get stick : 一次性获取左/右摇杆所有轴的实时归一化值 (-1.0 ~ 1.0)
+
+4. 系统工具 (help)
+help : 打印所有根指令列表
+
+错误处理规范
+若输入未知指令，系统会提示：错误: 未知指令。 [XXX] 的子指令应为: 并列出有效词库。
+
+若修改只读项（如 now_angle 或 correction），系统会提示：错误: [XXX] 为只读项，不可修改。
+
+参数设置成功后，系统会回复 Success 或 OK。

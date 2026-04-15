@@ -16,9 +16,10 @@
 
 /* Includes ------------------------------------------------------------------*/
 
+#include <string.h>
+
 #include "stm32f4xx_hal.h"
 #include "usart.h"
-#include <string.h>
 
 /* Exported macros -----------------------------------------------------------*/
 
@@ -31,14 +32,13 @@
  * @brief UART通信接收回调函数数据类型
  *
  */
-typedef void (*UART_Call_Back)(uint8_t *Buffer, uint16_t Length);
+typedef void (*UART_Call_Back)(uint8_t* Buffer, uint16_t Length);
 
 /**
  * @brief UART通信处理结构体
  */
-struct Struct_UART_Manage_Object
-{
-    UART_HandleTypeDef *UART_Handler;
+struct Struct_UART_Manage_Object {
+    UART_HandleTypeDef* UART_Handler;
     uint8_t Tx_Buffer[UART_BUFFER_SIZE];
     uint8_t Rx_Buffer[UART_BUFFER_SIZE];
     uint16_t Rx_Buffer_Length;
@@ -60,11 +60,11 @@ extern Struct_UART_Manage_Object UART8_Manage_Object;
 
 /* Exported function declarations --------------------------------------------*/
 
-void UART_Init(UART_HandleTypeDef *huart, UART_Call_Back Callback_Function, uint16_t Rx_Buffer_Length);
+void UART_Init(UART_HandleTypeDef* huart, UART_Call_Back Callback_Function, uint16_t Rx_Buffer_Length);
 
-void UART_Reinit(UART_HandleTypeDef *huart);
+void UART_Reinit(UART_HandleTypeDef* huart);
 
-uint8_t UART_Send_Data(UART_HandleTypeDef *huart, uint8_t *Data, uint16_t Length);
+uint8_t UART_Send_Data(UART_HandleTypeDef* huart, uint8_t* Data, uint16_t Length);
 
 void TIM_1ms_UART_PeriodElapsedCallback();
 

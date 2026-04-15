@@ -9,21 +9,21 @@ Class_Debug_FIFO Debug_FIFO;
  */
 bool Class_Debug_FIFO::GetLine(std::string& line) {
     // 缓冲区为空，直接返回
-    if (head == tail) return false;
+    if (head == tail)
+        return false;
 
     uint16_t curr = tail;
     int16_t startPos = -1;  // 用于标记 '/' 的位置
     bool foundEnd = false;
-    uint16_t endPos = 0;    // 用于标记换行符的位置
+    uint16_t endPos = 0;  // 用于标记换行符的位置
 
     // 1. 遍历当前缓冲区，寻找起始符 '/' 和结束换行符
     while (curr != head) {
         uint8_t c = buffer[curr];
 
         if (c == '/') {
-            startPos = curr; // 记录指令起始点
-        } 
-        else if (startPos != -1 && (c == '\r' || c == '\n')) {
+            startPos = curr;  // 记录指令起始点
+        } else if (startPos != -1 && (c == '\r' || c == '\n')) {
             // 如果已经找到起始符，且当前字符是换行符，说明捕获到了完整行
             endPos = curr;
             foundEnd = true;
@@ -37,11 +37,11 @@ bool Class_Debug_FIFO::GetLine(std::string& line) {
         // 如果找到了起始符但没有结束符，且起始符之前有垃圾数据
         // 将 tail 移到起始符位置，丢弃之前的无用数据
         if (startPos != -1 && startPos != tail) {
-            tail = startPos; 
-        } 
+            tail = startPos;
+        }
         // 如果连起始符都没有，且缓冲区快满了，则清空缓冲区防止溢出
         else if (startPos == -1 && ((head + 1) % DEBUG_FIFO_SIZE == tail)) {
-            tail = head; 
+            tail = head;
         }
         return false;
     }

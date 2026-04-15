@@ -14,8 +14,8 @@
 
 /* Includes ------------------------------------------------------------------*/
 
-#include "stm32f4xx_hal.h"
 #include "arm_math.h"
+#include "stm32f4xx_hal.h"
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-result"
@@ -41,21 +41,21 @@
 
 /* Exported function declarations --------------------------------------------*/
 
-void Math_Boolean_Logical_Not(bool *Value);
+void Math_Boolean_Logical_Not(bool* Value);
 
-void Math_Endian_Reverse_16(void *Address);
+void Math_Endian_Reverse_16(void* Address);
 
-uint16_t Math_Endian_Reverse_16(void *Source, void *Destination);
+uint16_t Math_Endian_Reverse_16(void* Source, void* Destination);
 
-void Math_Endian_Reverse_32(void *Address);
+void Math_Endian_Reverse_32(void* Address);
 
-uint32_t Math_Endian_Reverse_32(void *Source, void *Destination);
+uint32_t Math_Endian_Reverse_32(void* Source, void* Destination);
 
-uint8_t Math_Sum_8(uint8_t *Address, uint32_t Length);
+uint8_t Math_Sum_8(uint8_t* Address, uint32_t Length);
 
-uint16_t Math_Sum_16(uint16_t *Address, uint32_t Length);
+uint16_t Math_Sum_16(uint16_t* Address, uint32_t Length);
 
-uint32_t Math_Sum_32(uint32_t *Address, uint32_t Length);
+uint32_t Math_Sum_32(uint32_t* Address, uint32_t Length);
 
 float Math_Sinc(float x);
 
@@ -71,15 +71,11 @@ float Math_Int_To_Float(int32_t x, int32_t Int_1, int32_t Int_2, float Float_1, 
  * @param Min 最小值
  * @param Max 最大值
  */
-template<typename Type>
-Type Math_Constrain(Type *x, Type Min, Type Max)
-{
-    if (*x < Min)
-    {
+template <typename Type>
+Type Math_Constrain(Type* x, Type Min, Type Max) {
+    if (*x < Min) {
         *x = Min;
-    }
-    else if (*x > Max)
-    {
+    } else if (*x > Max) {
         *x = Max;
     }
     return (*x);
@@ -92,9 +88,8 @@ Type Math_Constrain(Type *x, Type Min, Type Max)
  * @param x 传入数据
  * @return Type x的绝对值
  */
-template<typename Type>
-Type Math_Abs(Type x)
-{
+template <typename Type>
+Type Math_Abs(Type x) {
     return ((x > 0) ? x : -x);
 }
 
@@ -106,15 +101,13 @@ Type Math_Abs(Type x)
  * @param modulus 模数
  * @return Type 返回的归化数, 介于 ±modulus / 2 之间
  */
-template<typename Type>
-Type Math_Modulus_Normalization(Type x, Type modulus)
-{
+template <typename Type>
+Type Math_Modulus_Normalization(Type x, Type modulus) {
     float tmp;
 
     tmp = fmod(x + modulus / 2.0f, modulus);
 
-    if (tmp < 0.0f)
-    {
+    if (tmp < 0.0f) {
         tmp += modulus;
     }
 

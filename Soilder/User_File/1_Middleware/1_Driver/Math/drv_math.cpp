@@ -29,14 +29,10 @@
  *
  * @param Value 布尔值地址
  */
-void Math_Boolean_Logical_Not(bool *Value)
-{
-    if (*Value == false)
-    {
+void Math_Boolean_Logical_Not(bool* Value) {
+    if (*Value == false) {
         *Value = true;
-    }
-    else if (*Value == true)
-    {
+    } else if (*Value == true) {
         *Value = false;
     }
 }
@@ -46,10 +42,9 @@ void Math_Boolean_Logical_Not(bool *Value)
  *
  * @param Address 地址
  */
-void Math_Endian_Reverse_16(void *Address)
-{
-    uint8_t *temp_address_8 = (uint8_t *) Address;
-    uint16_t *temp_address_16 = (uint16_t *) Address;
+void Math_Endian_Reverse_16(void* Address) {
+    uint8_t* temp_address_8 = (uint8_t*)Address;
+    uint16_t* temp_address_16 = (uint16_t*)Address;
     *temp_address_16 = temp_address_8[0] << 8 | temp_address_8[1];
 }
 
@@ -60,17 +55,15 @@ void Math_Endian_Reverse_16(void *Address)
  * @param Destination 目标存储地址
  * @return uint16_t 结果
  */
-uint16_t Math_Endian_Reverse_16(void *Source, void *Destination)
-{
-    uint8_t *temp_address_8 = (uint8_t *) Source;
+uint16_t Math_Endian_Reverse_16(void* Source, void* Destination) {
+    uint8_t* temp_address_8 = (uint8_t*)Source;
     uint16_t temp_address_16;
     temp_address_16 = temp_address_8[0] << 8 | temp_address_8[1];
 
-    if (Destination != nullptr)
-    {
+    if (Destination != nullptr) {
         uint8_t *temp_source, *temp_destination;
-        temp_source = (uint8_t *) Source;
-        temp_destination = (uint8_t *) Destination;
+        temp_source = (uint8_t*)Source;
+        temp_destination = (uint8_t*)Destination;
 
         temp_destination[0] = temp_source[1];
         temp_destination[1] = temp_source[0];
@@ -84,10 +77,9 @@ uint16_t Math_Endian_Reverse_16(void *Source, void *Destination)
  *
  * @param Address 地址
  */
-void Math_Endian_Reverse_32(void *Address)
-{
-    uint8_t *temp_address_8 = (uint8_t *) Address;
-    uint32_t *temp_address_32 = (uint32_t *) Address;
+void Math_Endian_Reverse_32(void* Address) {
+    uint8_t* temp_address_8 = (uint8_t*)Address;
+    uint32_t* temp_address_32 = (uint32_t*)Address;
     *temp_address_32 = temp_address_8[0] << 24 | temp_address_8[1] << 16 | temp_address_8[2] << 8 | temp_address_8[3];
 }
 
@@ -98,17 +90,15 @@ void Math_Endian_Reverse_32(void *Address)
  * @param Destination 目标存储地址
  * @return uint32_t 结果
  */
-uint32_t Math_Endian_Reverse_32(void *Source, void *Destination)
-{
-    uint8_t *temp_address_8 = (uint8_t *) Source;
+uint32_t Math_Endian_Reverse_32(void* Source, void* Destination) {
+    uint8_t* temp_address_8 = (uint8_t*)Source;
     uint32_t temp_address_32;
     temp_address_32 = temp_address_8[0] << 24 | temp_address_8[1] << 16 | temp_address_8[2] << 8 | temp_address_8[3];
 
-    if (Destination != nullptr)
-    {
+    if (Destination != nullptr) {
         uint8_t *temp_source, *temp_destination;
-        temp_source = (uint8_t *) Source;
-        temp_destination = (uint8_t *) Destination;
+        temp_source = (uint8_t*)Source;
+        temp_destination = (uint8_t*)Destination;
 
         temp_destination[0] = temp_source[3];
         temp_destination[1] = temp_source[2];
@@ -126,11 +116,9 @@ uint32_t Math_Endian_Reverse_32(void *Source, void *Destination)
  * @param Length 被加的数据的数量, 注意不是字节数
  * @return uint8_t 结果
  */
-uint8_t Math_Sum_8(uint8_t *Address, uint32_t Length)
-{
+uint8_t Math_Sum_8(uint8_t* Address, uint32_t Length) {
     uint8_t sum = 0;
-    for (int i = 0; i < Length; i++)
-    {
+    for (int i = 0; i < Length; i++) {
         sum += Address[i];
     }
     return (sum);
@@ -143,11 +131,9 @@ uint8_t Math_Sum_8(uint8_t *Address, uint32_t Length)
  * @param Length 被加的数据的数量, 注意不是字节数
  * @return uint16_t 结果
  */
-uint16_t Math_Sum_16(uint16_t *Address, uint32_t Length)
-{
+uint16_t Math_Sum_16(uint16_t* Address, uint32_t Length) {
     uint16_t sum = 0;
-    for (int i = 0; i < Length; i++)
-    {
+    for (int i = 0; i < Length; i++) {
         sum += Address[i];
     }
     return (sum);
@@ -160,11 +146,9 @@ uint16_t Math_Sum_16(uint16_t *Address, uint32_t Length)
  * @param Length 被加的数据的数量, 注意不是字节数
  * @return uint32_t 结果
  */
-uint32_t Math_Sum_32(uint32_t *Address, uint32_t Length)
-{
+uint32_t Math_Sum_32(uint32_t* Address, uint32_t Length) {
     uint32_t sum = 0;
-    for (int i = 0; i < Length; i++)
-    {
+    for (int i = 0; i < Length; i++) {
         sum += Address[i];
     }
     return (sum);
@@ -176,11 +160,9 @@ uint32_t Math_Sum_32(uint32_t *Address, uint32_t Length)
  * @param x 输入
  * @return float 输出
  */
-float Math_Sinc(float x)
-{
+float Math_Sinc(float x) {
     // 分母为0则按极限求法
-    if (Math_Abs(x) <= 2.0f * FLT_EPSILON)
-    {
+    if (Math_Abs(x) <= 2.0f * FLT_EPSILON) {
         return (1.0f);
     }
 
@@ -197,10 +179,9 @@ float Math_Sinc(float x)
  * @param Int_2 整型2
  * @return int32_t 整型
  */
-int32_t Math_Float_To_Int(float x, float Float_1, float Float_2, int32_t Int_1, int32_t Int_2)
-{
+int32_t Math_Float_To_Int(float x, float Float_1, float Float_2, int32_t Int_1, int32_t Int_2) {
     float tmp = (x - Float_1) / (Float_2 - Float_1);
-    int32_t out = tmp * (float) (Int_2 - Int_1) + Int_1;
+    int32_t out = tmp * (float)(Int_2 - Int_1) + Int_1;
     return (out);
 }
 
@@ -214,9 +195,8 @@ int32_t Math_Float_To_Int(float x, float Float_1, float Float_2, int32_t Int_1, 
  * @param Float_2 浮点数2
  * @return float 浮点数
  */
-float Math_Int_To_Float(int32_t x, int32_t Int_1, int32_t Int_2, float Float_1, float Float_2)
-{
-    float tmp = (float) (x - Int_1) / (float) (Int_2 - Int_1);
+float Math_Int_To_Float(int32_t x, int32_t Int_1, int32_t Int_2, float Float_1, float Float_2) {
+    float tmp = (float)(x - Int_1) / (float)(Int_2 - Int_1);
     float out = tmp * (Float_2 - Float_1) + Float_1;
     return (out);
 }

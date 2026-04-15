@@ -11,36 +11,41 @@
  */
 
 /**
- * @brief 注意, 每个类的对象分为专属对象Specialized, 同类可复用对象Reusable以及通用对象Generic
+ * @brief 注意, 每个类的对象分为专属对象Specialized,
+ * 同类可复用对象Reusable以及通用对象Generic
  *
  * 专属对象:
  * 单对单来独打独
- * 比如交互类的底盘对象, 只需要交互对象调用且全局只有一个, 这样看来, 底盘就是交互类的专属对象
- * 这种对象直接封装在上层类里面, 初始化在上层类里面, 调用在上层类里面
+ * 比如交互类的底盘对象, 只需要交互对象调用且全局只有一个, 这样看来,
+ * 底盘就是交互类的专属对象 这种对象直接封装在上层类里面, 初始化在上层类里面,
+ * 调用在上层类里面
  *
  * 同类可复用对象:
  * 各调各的
- * 比如电机的对象, 底盘可以调用, 云台可以调用, 而两者调用的是不同的对象, 这种就是同类可复用对象
- * 电机的pid对象也算同类可复用对象, 它们都在底盘类里初始化
- * 这种对象直接封装在上层类里面, 初始化在最近的一个上层专属对象的类里面, 调用在上层类里面
+ * 比如电机的对象, 底盘可以调用, 云台可以调用, 而两者调用的是不同的对象,
+ * 这种就是同类可复用对象 电机的pid对象也算同类可复用对象,
+ * 它们都在底盘类里初始化 这种对象直接封装在上层类里面,
+ * 初始化在最近的一个上层专属对象的类里面, 调用在上层类里面
  *
  * 通用对象:
  * 多个调用同一个
- * 比如底盘陀螺仪对象, 底盘类要调用它做小陀螺, 云台要调用它做方位感知, 因此底盘陀螺仪是通用对象.
- * 这种对象以指针形式进行指定, 初始化在包含所有调用它的上层的类里面, 调用在上层类里面
+ * 比如底盘陀螺仪对象, 底盘类要调用它做小陀螺, 云台要调用它做方位感知,
+ * 因此底盘陀螺仪是通用对象. 这种对象以指针形式进行指定,
+ * 初始化在包含所有调用它的上层的类里面, 调用在上层类里面
  *
  */
 
 /* Includes ------------------------------------------------------------------*/
 
 #include "tsk_config_and_callback.h"
-#include "stm32f407xx.h"
-#include "1_Middleware/3_Debug/debug_log.h"
-#include "2_Device/Motor/Motor_DJI/dvc_motor_dji.h"
-#include "1_Middleware/3_Debug/debug_cmd_interface.h"
-#include "3_Chariot/1_Module/Chassis/crt_chassis.h"
+
 #include "1_Middleware/1_Driver/TIM/drv_tim.h"
+#include "1_Middleware/3_Debug/debug_cmd_interface.h"
+#include "1_Middleware/3_Debug/debug_log.h"
 #include "2_Device/DR16/dvc_dr16.h"
+#include "2_Device/Motor/Motor_DJI/dvc_motor_dji.h"
+#include "3_Chariot/1_Module/Chassis/crt_chassis.h"
+#include "stm32f407xx.h"
 
 /* Private macros ------------------------------------------------------------*/
 
@@ -62,48 +67,37 @@ Class_DR16 dr16;
 
 bool flag_1ms = false;
 
-bool readFlag(bool& flag){
+bool readFlag(bool& flag) {
     bool flagTemp = flag;
     flag = false;
     return flagTemp;
 }
 
-void Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
-{
-    switch (CAN_RxMessage->Header.StdId)
-    {
-    case (0x201):
-    {
-        motor_x_p.CAN_RxCpltCallback(CAN_RxMessage->Data);
-    }
-    break;
-    case (0x203):
-    {
-        motor_x_m.CAN_RxCpltCallback(CAN_RxMessage->Data);
-    }
-    break;
-    case (0x202):
-    {
-        motor_y_p.CAN_RxCpltCallback(CAN_RxMessage->Data);
-    }
-    break;
-    case (0x204):
-    {
-        motor_y_m.CAN_RxCpltCallback(CAN_RxMessage->Data);
-    }
-    break;
+void Device_CAN1_Callback(Struct_CAN_Rx_Buffer* CAN_RxMessage) {
+    switch (CAN_RxMessage->Header.StdId) {
+        case (0x201): {
+            motor_x_p.CAN_RxCpltCallback(CAN_RxMessage->Data);
+        } break;
+        case (0x203): {
+            motor_x_m.CAN_RxCpltCallback(CAN_RxMessage->Data);
+        } break;
+        case (0x202): {
+            motor_y_p.CAN_RxCpltCallback(CAN_RxMessage->Data);
+        } break;
+        case (0x204): {
+            motor_y_m.CAN_RxCpltCallback(CAN_RxMessage->Data);
+        } break;
     }
 }
 
-void DR16_UART3_Callback(uint8_t *Rx_Data, uint16_t Length){
+void DR16_UART3_Callback(uint8_t* Rx_Data, uint16_t Length) {
     dr16.UART_RxCpltCallback(Rx_Data, Length);
     chassis.Set_Control_Target(dr16.Get_Left_X(), dr16.Get_Left_Y(), dr16.Get_Yaw(), false);
 }
 
 bool test_motor = false;
 
-void HAL_SYSTICK_Callback(void)
-{
+void HAL_SYSTICK_Callback(void) {
     flag_1ms = true;
     // test_motor = true;
 }
@@ -112,7 +106,7 @@ void HAL_SYSTICK_Callback(void)
 // static uint32_t lastTime = HAL_GetTick();
 // static uint32_t nowTime;
 
-void TIM_100ms_PeriodElapsedCallback(){
+void TIM_100ms_PeriodElapsedCallback() {
     // chassis.TIM_100ms_Alive_PeriodElapsedCallback();
     // nowTime = HAL_GetTick();
     // flag_check = true;
@@ -123,8 +117,7 @@ void TIM_100ms_PeriodElapsedCallback(){
  * @brief 初始化任务
  *
  */
-void Task_Init()
-{
+void Task_Init() {
     CAN_Init(&hcan1, Device_CAN1_Callback);
     TIM_Init(&htim3, TIM_100ms_PeriodElapsedCallback);
 
@@ -153,14 +146,13 @@ void Task_Init()
  * @brief 前台循环任务
  *
  */
-void Task_Loop()
-{
-	Debug_Cmd_Poll_Callback();
+void Task_Loop() {
+    Debug_Cmd_Poll_Callback();
 
     // if(readFlag(test_motor)){
     //     motor_x_p.TIM_Calculate_PeriodElapsedCallback();
     // }
-        
+
     // if(readFlag(flag_dr16TIM_1ms)){
     //     dr16.TIM_1ms_Calculate_PeriodElapsedCallback();
     // }
@@ -170,16 +162,16 @@ void Task_Loop()
     //     lastTime = nowTime;
     // }
 
-    if(readFlag(flag_1ms)){
+    if (readFlag(flag_1ms)) {
         TIM_1ms_CAN_PeriodElapsedCallback();
 
-        if(dr16.Get_Status() == DR16_Status_ENABLE){
+        if (dr16.Get_Status() == DR16_Status_ENABLE) {
             chassis.TIM_1ms_Calculate_PeriodElapsedCallback();
         }
 
         CAN_Send_Data(&hcan1, 0x200, CAN1_0x200_Tx_Data, 8);
     }
-        
 }
 
-/************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/
+/************************ COPYRIGHT(C) USTC-ROBOWALKER
+ * **************************/

@@ -14,9 +14,10 @@
 
 /* Includes ------------------------------------------------------------------*/
 
-#include "1_Middleware/1_Driver/UART/drv_uart.h"
-#include "1_Middleware/1_Driver/Math/drv_math.h"
 #include <stdarg.h>
+
+#include "1_Middleware/1_Driver/Math/drv_math.h"
+#include "1_Middleware/1_Driver/UART/drv_uart.h"
 
 /* Exported macros -----------------------------------------------------------*/
 
@@ -29,8 +30,7 @@
  * @brief 是否开启校验和
  *
  */
-enum Enum_Serialplot_Checksum_8
-{
+enum Enum_Serialplot_Checksum_8 {
     Serialplot_Checksum_8_DISABLE = 0,
     Serialplot_Checksum_8_ENABLE,
 };
@@ -39,8 +39,7 @@ enum Enum_Serialplot_Checksum_8
  * @brief 串口绘图传输数据类型
  *
  */
-enum Enum_Serialplot_Data_Type
-{
+enum Enum_Serialplot_Data_Type {
     Serialplot_Data_Type_UINT8 = 0,
     Serialplot_Data_Type_UINT16,
     Serialplot_Data_Type_UINT32,
@@ -55,10 +54,14 @@ enum Enum_Serialplot_Data_Type
  * @brief Specialized, 串口绘图工具, 最多支持12个通道
  *
  */
-class Class_Serialplot
-{
-public:
-    void Init(UART_HandleTypeDef *huart, Enum_Serialplot_Checksum_8 __Checksum_8 = Serialplot_Checksum_8_ENABLE, uint8_t __Rx_Variable_Assignment_Num = 0, char **__Rx_Variable_Assignment_List = NULL, Enum_Serialplot_Data_Type __Data_Type = Serialplot_Data_Type_FLOAT, uint8_t __Frame_Header = 0xab);
+class Class_Serialplot {
+   public:
+    void Init(UART_HandleTypeDef* huart,
+              Enum_Serialplot_Checksum_8 __Checksum_8 = Serialplot_Checksum_8_ENABLE,
+              uint8_t __Rx_Variable_Assignment_Num = 0,
+              char** __Rx_Variable_Assignment_List = NULL,
+              Enum_Serialplot_Data_Type __Data_Type = Serialplot_Data_Type_FLOAT,
+              uint8_t __Frame_Header = 0xab);
 
     inline int8_t Get_Variable_Index();
 
@@ -66,21 +69,21 @@ public:
 
     inline void Set_Data(uint8_t Number, ...);
 
-    void UART_RxCpltCallback(uint8_t *Rx_Data, uint16_t Length);
+    void UART_RxCpltCallback(uint8_t* Rx_Data, uint16_t Length);
 
     void TIM_1ms_Write_PeriodElapsedCallback();
 
-protected:
+   protected:
     // 初始化相关常量
 
     // 绑定的UART
-    Struct_UART_Manage_Object *UART_Manage_Object;
+    Struct_UART_Manage_Object* UART_Manage_Object;
     // 是否开启校验和
     Enum_Serialplot_Checksum_8 Checksum_8;
     // 接收指令字典的数量
     uint8_t Rx_Variable_Num;
     // 接收指令字典列表指针
-    char **Rx_Variable_List;
+    char** Rx_Variable_List;
     // 串口绘图数据类型
     Enum_Serialplot_Data_Type Tx_Data_Type;
     // 数据包头标
@@ -91,7 +94,7 @@ protected:
     // 内部变量
 
     // 需要绘图的各个变量数据地址
-    const void *Data[25];
+    const void* Data[25];
     // 当前发送的数据长度, 等价于新数据偏移量
     uint8_t Data_Number = 0;
     // 当前接收的指令在指令字典中的编号
@@ -125,8 +128,7 @@ protected:
  *
  * @return int8_t 当前接收的指令在指令字典中的编号
  */
-inline int8_t Class_Serialplot::Get_Variable_Index()
-{
+inline int8_t Class_Serialplot::Get_Variable_Index() {
     return (Variable_Index);
 }
 
@@ -135,8 +137,7 @@ inline int8_t Class_Serialplot::Get_Variable_Index()
  *
  * @return float 当前接收的指令在指令字典中的值
  */
-inline float Class_Serialplot::Get_Variable_Value()
-{
+inline float Class_Serialplot::Get_Variable_Value() {
     return (Variable_Value);
 }
 
@@ -146,13 +147,11 @@ inline float Class_Serialplot::Get_Variable_Value()
  * @param Number 添加的数据数量
  * @param ... 每个数据的指针
  */
-inline void Class_Serialplot::Set_Data(uint8_t Number, ...)
-{
+inline void Class_Serialplot::Set_Data(uint8_t Number, ...) {
     va_list data_ptr;
     va_start(data_ptr, Number);
-    for (int i = 0; i < Number; i++)
-    {
-        Data[i] = (void *) va_arg(data_ptr, int);
+    for (int i = 0; i < Number; i++) {
+        Data[i] = (void*)va_arg(data_ptr, int);
     }
     va_end(data_ptr);
     Data_Number = Number;

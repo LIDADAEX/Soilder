@@ -24,8 +24,7 @@
  * @brief 微分先行
  *
  */
-enum Enum_PID_D_First
-{
+enum Enum_PID_D_First {
     PID_D_First_DISABLE = 0,
     PID_D_First_ENABLE,
 };
@@ -35,10 +34,20 @@ enum Enum_PID_D_First
  *
  *
  */
-class Class_PID
-{
-public:
-    void Init(float __K_P, float __K_I, float __K_D, float __K_F = 0.0f, float __I_Out_Max = 0.0f, float __Out_Max = 0.0f, float __D_T = 0.001f, float __Dead_Zone = 0.0f, float __I_Variable_Speed_A = 0.0f, float __I_Variable_Speed_B = 0.0f, float __I_Separate_Threshold = 0.0f, Enum_PID_D_First __D_First = PID_D_First_DISABLE);
+class Class_PID {
+   public:
+    void Init(float __K_P,
+              float __K_I,
+              float __K_D,
+              float __K_F = 0.0f,
+              float __I_Out_Max = 0.0f,
+              float __Out_Max = 0.0f,
+              float __D_T = 0.001f,
+              float __Dead_Zone = 0.0f,
+              float __I_Variable_Speed_A = 0.0f,
+              float __I_Variable_Speed_B = 0.0f,
+              float __I_Separate_Threshold = 0.0f,
+              Enum_PID_D_First __D_First = PID_D_First_DISABLE);
 
     inline float Get_Integral_Error();
 
@@ -87,12 +96,12 @@ public:
     inline float Get_I_Variable_Speed_A();
 
     inline float Get_I_Variable_Speed_B();
-    
+
     inline float Get_I_Separate_Threshold();
 
     void TIM_Calculate_PeriodElapsedCallback();
 
-protected:
+   protected:
     // 初始化相关常量
 
     // PID计时器周期, s
@@ -165,8 +174,7 @@ protected:
  *
  * @return float 输出值
  */
-inline float Class_PID::Get_Integral_Error()
-{
+inline float Class_PID::Get_Integral_Error() {
     return (Integral_Error);
 }
 
@@ -175,8 +183,7 @@ inline float Class_PID::Get_Integral_Error()
  *
  * @return float 输出值
  */
-inline float Class_PID::Get_Out()
-{
+inline float Class_PID::Get_Out() {
     return (Out);
 }
 
@@ -185,8 +192,7 @@ inline float Class_PID::Get_Out()
  *
  * @param __K_P PID的P
  */
-inline void Class_PID::Set_K_P(float __K_P)
-{
+inline void Class_PID::Set_K_P(float __K_P) {
     K_P = __K_P;
 }
 
@@ -195,8 +201,7 @@ inline void Class_PID::Set_K_P(float __K_P)
  *
  * @param __K_I PID的I
  */
-inline void Class_PID::Set_K_I(float __K_I)
-{
+inline void Class_PID::Set_K_I(float __K_I) {
     K_I = __K_I;
 }
 
@@ -205,8 +210,7 @@ inline void Class_PID::Set_K_I(float __K_I)
  *
  * @param __K_D PID的D
  */
-inline void Class_PID::Set_K_D(float __K_D)
-{
+inline void Class_PID::Set_K_D(float __K_D) {
     K_D = __K_D;
 }
 
@@ -215,8 +219,7 @@ inline void Class_PID::Set_K_D(float __K_D)
  *
  * @param __K_D 前馈
  */
-inline void Class_PID::Set_K_F(float __K_F)
-{
+inline void Class_PID::Set_K_F(float __K_F) {
     K_F = __K_F;
 }
 
@@ -225,8 +228,7 @@ inline void Class_PID::Set_K_F(float __K_F)
  *
  * @param __I_Out_Max 积分限幅, 0为不限制
  */
-inline void Class_PID::Set_I_Out_Max(float __I_Out_Max)
-{
+inline void Class_PID::Set_I_Out_Max(float __I_Out_Max) {
     I_Out_Max = __I_Out_Max;
 }
 
@@ -235,8 +237,7 @@ inline void Class_PID::Set_I_Out_Max(float __I_Out_Max)
  *
  * @param __Out_Max 输出限幅, 0为不限制
  */
-inline void Class_PID::Set_Out_Max(float __Out_Max)
-{
+inline void Class_PID::Set_Out_Max(float __Out_Max) {
     Out_Max = __Out_Max;
 }
 
@@ -245,8 +246,7 @@ inline void Class_PID::Set_Out_Max(float __Out_Max)
  *
  * @param __I_Variable_Speed_A 定速内段阈值, 0为不限制
  */
-inline void Class_PID::Set_I_Variable_Speed_A(float __I_Variable_Speed_A)
-{
+inline void Class_PID::Set_I_Variable_Speed_A(float __I_Variable_Speed_A) {
     I_Variable_Speed_A = __I_Variable_Speed_A;
 }
 
@@ -255,8 +255,7 @@ inline void Class_PID::Set_I_Variable_Speed_A(float __I_Variable_Speed_A)
  *
  * @param __I_Variable_Speed_B 变速区间, 0为不限制
  */
-inline void Class_PID::Set_I_Variable_Speed_B(float __I_Variable_Speed_B)
-{
+inline void Class_PID::Set_I_Variable_Speed_B(float __I_Variable_Speed_B) {
     I_Variable_Speed_B = __I_Variable_Speed_B;
 }
 
@@ -265,8 +264,7 @@ inline void Class_PID::Set_I_Variable_Speed_B(float __I_Variable_Speed_B)
  *
  * @param __I_Separate_Threshold 积分分离阈值，需为正数, 0为不限制
  */
-inline void Class_PID::Set_I_Separate_Threshold(float __I_Separate_Threshold)
-{
+inline void Class_PID::Set_I_Separate_Threshold(float __I_Separate_Threshold) {
     I_Separate_Threshold = __I_Separate_Threshold;
 }
 
@@ -275,8 +273,7 @@ inline void Class_PID::Set_I_Separate_Threshold(float __I_Separate_Threshold)
  *
  * @param __Target 目标值
  */
-inline void Class_PID::Set_Target(float __Target)
-{
+inline void Class_PID::Set_Target(float __Target) {
     Target = __Target;
 }
 
@@ -285,8 +282,7 @@ inline void Class_PID::Set_Target(float __Target)
  *
  * @param __Now 当前值
  */
-inline void Class_PID::Set_Now(float __Now)
-{
+inline void Class_PID::Set_Now(float __Now) {
     Now = __Now;
 }
 
@@ -295,8 +291,7 @@ inline void Class_PID::Set_Now(float __Now)
  *
  * @param __Set_Integral_Error 积分值
  */
-inline void Class_PID::Set_Integral_Error(float __Integral_Error)
-{
+inline void Class_PID::Set_Integral_Error(float __Integral_Error) {
     Integral_Error = __Integral_Error;
 }
 
@@ -304,8 +299,7 @@ inline void Class_PID::Set_Integral_Error(float __Integral_Error)
  * @brief 获取PID的P
  * @return float P
  */
-inline float Class_PID::Get_K_P()
-{
+inline float Class_PID::Get_K_P() {
     return K_P;
 }
 
@@ -313,8 +307,7 @@ inline float Class_PID::Get_K_P()
  * @brief 获取PID的I
  * @return float I
  */
-inline float Class_PID::Get_K_I()
-{
+inline float Class_PID::Get_K_I() {
     return K_I;
 }
 
@@ -322,8 +315,7 @@ inline float Class_PID::Get_K_I()
  * @brief 获取PID的D
  * @return float D
  */
-inline float Class_PID::Get_K_D()
-{
+inline float Class_PID::Get_K_D() {
     return K_D;
 }
 
@@ -331,8 +323,7 @@ inline float Class_PID::Get_K_D()
  * @brief 获取前馈K_F
  * @return float K_F
  */
-inline float Class_PID::Get_K_F()
-{
+inline float Class_PID::Get_K_F() {
     return K_F;
 }
 
@@ -340,8 +331,7 @@ inline float Class_PID::Get_K_F()
  * @brief 获取积分限幅
  * @return float 积分限幅值
  */
-inline float Class_PID::Get_I_Out_Max()
-{
+inline float Class_PID::Get_I_Out_Max() {
     return I_Out_Max;
 }
 
@@ -349,8 +339,7 @@ inline float Class_PID::Get_I_Out_Max()
  * @brief 获取输出限幅
  * @return float 输出限幅值
  */
-inline float Class_PID::Get_Out_Max()
-{
+inline float Class_PID::Get_Out_Max() {
     return Out_Max;
 }
 
@@ -358,14 +347,12 @@ inline float Class_PID::Get_Out_Max()
  * @brief 获取死区
  * @return float 死区大小
  */
-inline float Class_PID::Get_Dead_Zone()
-{
+inline float Class_PID::Get_Dead_Zone() {
     return Dead_Zone;
 }
 
 // 如果你还需要获取当前的死区设置接口，顺便帮你把 Set 也补一个，因为之前的 Init 里有但没单独的 Set
-inline void Class_PID::Set_Dead_Zone(float __Dead_Zone)
-{
+inline void Class_PID::Set_Dead_Zone(float __Dead_Zone) {
     Dead_Zone = __Dead_Zone;
 }
 
@@ -373,8 +360,7 @@ inline void Class_PID::Set_Dead_Zone(float __Dead_Zone)
  * @brief 获取变速积分定速内段阈值
  * * @return float 阈值A
  */
-inline float Class_PID::Get_I_Variable_Speed_A()
-{
+inline float Class_PID::Get_I_Variable_Speed_A() {
     return (I_Variable_Speed_A);
 }
 
@@ -382,8 +368,7 @@ inline float Class_PID::Get_I_Variable_Speed_A()
  * @brief 获取变速积分变速区间阈值
  * * @return float 阈值B
  */
-inline float Class_PID::Get_I_Variable_Speed_B()
-{
+inline float Class_PID::Get_I_Variable_Speed_B() {
     return (I_Variable_Speed_B);
 }
 
@@ -391,8 +376,7 @@ inline float Class_PID::Get_I_Variable_Speed_B()
  * @brief 获取积分分离阈值
  * * @return float 积分分离阈值
  */
-inline float Class_PID::Get_I_Separate_Threshold()
-{
+inline float Class_PID::Get_I_Separate_Threshold() {
     return (I_Separate_Threshold);
 }
 

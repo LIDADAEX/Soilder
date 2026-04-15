@@ -30,14 +30,10 @@
  * @param hcan CAN编号
  * @param __CAN_Rx_ID CAN ID
  */
-void Class_Supercap_24::Init(CAN_HandleTypeDef *hcan, uint16_t __CAN_Rx_ID, uint16_t __CAN_Tx_ID)
-{
-    if (hcan->Instance == CAN1)
-    {
+void Class_Supercap_24::Init(CAN_HandleTypeDef* hcan, uint16_t __CAN_Rx_ID, uint16_t __CAN_Tx_ID) {
+    if (hcan->Instance == CAN1) {
         CAN_Manage_Object = &CAN1_Manage_Object;
-    }
-    else if (hcan->Instance == CAN2)
-    {
+    } else if (hcan->Instance == CAN2) {
         CAN_Manage_Object = &CAN2_Manage_Object;
     }
     CAN_Rx_ID = __CAN_Rx_ID;
@@ -56,8 +52,7 @@ void Class_Supercap_24::Init(CAN_HandleTypeDef *hcan, uint16_t __CAN_Rx_ID, uint
  *
  * @param Rx_Data 接收的数据
  */
-void Class_Supercap_24::CAN_RxCpltCallback(uint8_t *Rx_Data)
-{
+void Class_Supercap_24::CAN_RxCpltCallback(uint8_t* Rx_Data) {
     // 滑动窗口, 判断超级电容是否在线
     Flag += 1;
 
@@ -68,16 +63,12 @@ void Class_Supercap_24::CAN_RxCpltCallback(uint8_t *Rx_Data)
  * @brief TIM定时器中断定期检测超级电容是否存活
  *
  */
-void Class_Supercap_24::TIM_1000ms_Alive_PeriodElapsedCallback()
-{
+void Class_Supercap_24::TIM_1000ms_Alive_PeriodElapsedCallback() {
     // 判断该时间段内是否接收过超级电容数据
-    if (Flag == Pre_Flag)
-    {
+    if (Flag == Pre_Flag) {
         // 电机断开连接
         Supercap_Status = Supercap_24_Status_DISABLE;
-    }
-    else
-    {
+    } else {
         // 电机保持连接
         Supercap_Status = Supercap_24_Status_ENABLE;
     }
@@ -88,8 +79,7 @@ void Class_Supercap_24::TIM_1000ms_Alive_PeriodElapsedCallback()
  * @brief TIM定时器中断打包数据到缓冲区的回调函数
  *
  */
-void Class_Supercap_24::TIM_10ms_Send_PeriodElapsedCallback()
-{
+void Class_Supercap_24::TIM_10ms_Send_PeriodElapsedCallback() {
     Output();
 
     CAN_Send_Data(CAN_Manage_Object->CAN_Handler, CAN_Tx_ID, Tx_Data, 8);
@@ -99,22 +89,20 @@ void Class_Supercap_24::TIM_10ms_Send_PeriodElapsedCallback()
  * @brief 数据处理过程
  *
  */
-void Class_Supercap_24::Data_Process()
-{
-    Struct_Supercap_24_CAN_Rx_Data *tmp_buffer = (Struct_Supercap_24_CAN_Rx_Data *) CAN_Manage_Object->Rx_Buffer.Data;
+void Class_Supercap_24::Data_Process() {
+    Struct_Supercap_24_CAN_Rx_Data* tmp_buffer = (Struct_Supercap_24_CAN_Rx_Data*)CAN_Manage_Object->Rx_Buffer.Data;
 
     Rx_Data.Now_Energy = tmp_buffer->Now_Energy;
     Rx_Data.Energy_Status = tmp_buffer->Energy_Status;
-    Rx_Data.Chassis_Power = (float) ((int16_t) Math_Endian_Reverse_16(&tmp_buffer->Chassis_Power, nullptr)) / 100.0f;
+    Rx_Data.Chassis_Power = (float)((int16_t)Math_Endian_Reverse_16(&tmp_buffer->Chassis_Power, nullptr)) / 100.0f;
 }
 
 /**
  * @brief 超级电容数据输出到CAN总线发送缓冲区
  *
  */
-void Class_Supercap_24::Output()
-{
-    Struct_Supercap_24_CAN_Tx_Data *tmp_buffer = (Struct_Supercap_24_CAN_Tx_Data *) Tx_Data;
+void Class_Supercap_24::Output() {
+    Struct_Supercap_24_CAN_Tx_Data* tmp_buffer = (Struct_Supercap_24_CAN_Tx_Data*)Tx_Data;
 
     tmp_buffer->Power_Limit_Max = Power_Limit_Max;
     tmp_buffer->Chassis_Buffer_Energy = Chassis_Buffer_Energy;

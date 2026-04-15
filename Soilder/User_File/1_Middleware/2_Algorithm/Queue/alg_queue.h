@@ -24,10 +24,9 @@
  * @brief Reusable, 循环队列本体
  *
  */
-template<typename Type, uint32_t Max_Size = 200>
-class Class_Queue
-{
-public:
+template <typename Type, uint32_t Max_Size = 200>
+class Class_Queue {
+   public:
     void Init();
 
     inline uint32_t Get_Length();
@@ -42,7 +41,7 @@ public:
 
     inline void Clear();
 
-protected:
+   protected:
     // 初始化相关常量
 
     // 常量
@@ -79,37 +78,34 @@ protected:
  * @tparam Type 类型
  * @tparam Max_Size 队列长度最大值
  */
-template<typename Type, uint32_t Max_Size>
-void Class_Queue<Type, Max_Size>::Init()
-{
+template <typename Type, uint32_t Max_Size>
+void Class_Queue<Type, Max_Size>::Init() {
     Front = 0;
     Rear = 0;
     Length = 0;
 }
 
 /**
-* @brief 获取队列长度
+ * @brief 获取队列长度
  *
-* @tparam Type 类型
-* @tparam Max_Size 队列长度最大值
-* @return 队首元素
-*/
-template<typename Type, uint32_t Max_Size>
-inline uint32_t Class_Queue<Type, Max_Size>::Get_Length()
-{
+ * @tparam Type 类型
+ * @tparam Max_Size 队列长度最大值
+ * @return 队首元素
+ */
+template <typename Type, uint32_t Max_Size>
+inline uint32_t Class_Queue<Type, Max_Size>::Get_Length() {
     return (Length);
 }
 
 /**
-* @brief 获取队首元素
+ * @brief 获取队首元素
  *
-* @tparam Type 类型
-* @tparam Max_Size 队列长度最大值
-* @return 队首元素
-*/
-template<typename Type, uint32_t Max_Size>
-inline Type Class_Queue<Type, Max_Size>::Get_Front()
-{
+ * @tparam Type 类型
+ * @tparam Max_Size 队列长度最大值
+ * @return 队首元素
+ */
+template <typename Type, uint32_t Max_Size>
+inline Type Class_Queue<Type, Max_Size>::Get_Front() {
     return (Queue[Front]);
 }
 
@@ -120,35 +116,27 @@ inline Type Class_Queue<Type, Max_Size>::Get_Front()
  * @tparam Max_Size 队列长度最大值
  * @return 队尾元素
  */
-template<typename Type, uint32_t Max_Size>
-inline Type Class_Queue<Type, Max_Size>::Get_Rear()
-{
+template <typename Type, uint32_t Max_Size>
+inline Type Class_Queue<Type, Max_Size>::Get_Rear() {
     return (Queue[Rear]);
 }
 
 /**
-* @brief 送入队列
-*
-* @tparam Type 类型
-* @tparam Max_Size 队列长度最大值
-* @param __Data 传入值
-*/
-template<typename Type, uint32_t Max_Size>
-inline void Class_Queue<Type, Max_Size>::Push(Type __Data)
-{
-    if (Length == Max_Size)
-    {
+ * @brief 送入队列
+ *
+ * @tparam Type 类型
+ * @tparam Max_Size 队列长度最大值
+ * @param __Data 传入值
+ */
+template <typename Type, uint32_t Max_Size>
+inline void Class_Queue<Type, Max_Size>::Push(Type __Data) {
+    if (Length == Max_Size) {
         return;
-    }
-    else
-    {
-        if (Length == 0)
-        {
+    } else {
+        if (Length == 0) {
             Front = 0;
             Rear = 0;
-        }
-        else
-        {
+        } else {
             Rear = (Rear + 1) % Max_Size;
         }
 
@@ -158,24 +146,18 @@ inline void Class_Queue<Type, Max_Size>::Push(Type __Data)
 }
 
 /**
-* @brief 弹出队列
-*
-* @tparam Type 类型
-* @tparam Max_Size 队列长度最大值
-* @return 弹出值
-*/
-template<typename Type, uint32_t Max_Size>
-inline Type Class_Queue<Type, Max_Size>::Pop()
-{
+ * @brief 弹出队列
+ *
+ * @tparam Type 类型
+ * @tparam Max_Size 队列长度最大值
+ * @return 弹出值
+ */
+template <typename Type, uint32_t Max_Size>
+inline Type Class_Queue<Type, Max_Size>::Pop() {
     Type temp = Queue[Front];
 
-    if (Length == 0)
-    {
-
-    }
-    else
-    {
-
+    if (Length == 0) {
+    } else {
         Front = (Front + 1) % Max_Size;
         Length--;
     }
@@ -184,14 +166,13 @@ inline Type Class_Queue<Type, Max_Size>::Pop()
 }
 
 /**
-* @brief 清空队列
-*
-* @tparam Type 类型
-* @tparam Max_Size 队列长度最大值
-*/
-template<typename Type, uint32_t Max_Size>
-inline void Class_Queue<Type, Max_Size>::Clear()
-{
+ * @brief 清空队列
+ *
+ * @tparam Type 类型
+ * @tparam Max_Size 队列长度最大值
+ */
+template <typename Type, uint32_t Max_Size>
+inline void Class_Queue<Type, Max_Size>::Clear() {
     Front = 0;
     Rear = 0;
     Length = 0;

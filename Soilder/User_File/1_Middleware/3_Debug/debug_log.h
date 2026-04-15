@@ -1,10 +1,11 @@
 #ifndef DEBUG_LOG_H
 #define DEBUG_LOG_H
 
-#include "stm32f4xx_hal.h"
-
 #include <stdio.h>
+
 #include <string>
+
+#include "stm32f4xx_hal.h"
 
 /**
  * @brief 日志等级
@@ -18,7 +19,7 @@ enum class LogLevel : uint16_t { Debug, Info, Warning, Error, Critical, Fatal };
  * logger.initialize();
  */
 class Logger {
-public:
+   public:
     static Logger& instance();
 
     /**
@@ -48,17 +49,12 @@ public:
 
 /*便利宏定义，对应等级，__FILE__,__LINE__,__FUNCTION__
     分别是QT的预设宏可以自动填入日志发送的文件，行数和函数*/
-#define LOG_DEBUG(msg) \
-    Logger::instance().log(LogLevel::Debug, msg, __FILE__, __LINE__, __FUNCTION__)
+#define LOG_DEBUG(msg) Logger::instance().log(LogLevel::Debug, msg, __FILE__, __LINE__, __FUNCTION__)
 #define LOG_INFO(msg) Logger::instance().log(LogLevel::Info, msg, __FILE__, __LINE__, __FUNCTION__)
-#define LOG_WARNING(msg) \
-    Logger::instance().log(LogLevel::Warning, msg, __FILE__, __LINE__, __FUNCTION__)
-#define LOG_ERROR(msg) \
-    Logger::instance().log(LogLevel::Error, msg, __FILE__, __LINE__, __FUNCTION__)
-#define LOG_CRITICAL(msg) \
-    Logger::instance().log(LogLevel::Critical, msg, __FILE__, __LINE__, __FUNCTION__)
-#define LOG_FATAL(msg) \
-    Logger::instance().log(LogLevel::Fatal, msg, __FILE__, __LINE__, __FUNCTION__)
+#define LOG_WARNING(msg) Logger::instance().log(LogLevel::Warning, msg, __FILE__, __LINE__, __FUNCTION__)
+#define LOG_ERROR(msg) Logger::instance().log(LogLevel::Error, msg, __FILE__, __LINE__, __FUNCTION__)
+#define LOG_CRITICAL(msg) Logger::instance().log(LogLevel::Critical, msg, __FILE__, __LINE__, __FUNCTION__)
+#define LOG_FATAL(msg) Logger::instance().log(LogLevel::Fatal, msg, __FILE__, __LINE__, __FUNCTION__)
 
     /**
      * @brief 设置控制台和文件日志等级
@@ -67,8 +63,7 @@ public:
      */
     void setLogLevel(LogLevel level);
 
-private:
-
+   private:
     LogLevel m_consoleLevel; /**< 控制台最低打印等级 */
     LogLevel m_fileLevel;    /**< 文件最低打印等级  */
 
@@ -86,7 +81,7 @@ private:
     void writeToConsole(LogLevel level, const std::string& formattedMsg);
 };
 
-inline Logger &Logger::instance() {
+inline Logger& Logger::instance() {
     static Logger instance;
     return instance;
 }
@@ -99,6 +94,4 @@ inline void Logger::setLogLevel(LogLevel level) {
     m_consoleLevel = level;
 }
 
-
-
-#endif // DEBUG_LOG_H
+#endif  // DEBUG_LOG_H

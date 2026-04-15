@@ -26,8 +26,7 @@
  * @brief 超级电容状态
  *
  */
-enum Enum_RM24_Supercap_Status
-{
+enum Enum_RM24_Supercap_Status {
     Supercap_24_Status_DISABLE = 0,
     Supercap_24_Status_ENABLE,
 };
@@ -36,8 +35,7 @@ enum Enum_RM24_Supercap_Status
  * @brief 各种子模块使能状态
  *
  */
-enum Enum_Supercap_24_Data_Status : uint8_t
-{
+enum Enum_Supercap_24_Data_Status : uint8_t {
     Supercap_24_Data_Status_DISABLE = 0,
     Supercap_24_Data_Status_ENABLE,
 };
@@ -46,8 +44,7 @@ enum Enum_Supercap_24_Data_Status : uint8_t
  * @brief 超级电容储能状态
  *
  */
-enum Enum_Supercap_24_Energy_Status : uint8_t
-{
+enum Enum_Supercap_24_Energy_Status : uint8_t {
     Supercap_24_Energy_Status_DISABLE = 0,
     Supercap_24_Energy_Status_WARNING,
     Supercap_24_Energy_Status_NORMAL,
@@ -57,8 +54,7 @@ enum Enum_Supercap_24_Energy_Status : uint8_t
  * @brief 超级电容给控制板的源数据
  *
  */
-struct Struct_Supercap_24_CAN_Rx_Data
-{
+struct Struct_Supercap_24_CAN_Rx_Data {
     // 当前能量值
     int32_t Now_Energy;
     // 当前状态, 指示是否可用
@@ -71,8 +67,7 @@ struct Struct_Supercap_24_CAN_Rx_Data
  * @brief 超级电容给控制板的源数据
  *
  */
-struct Struct_Supercap_24_Rx_Data
-{
+struct Struct_Supercap_24_Rx_Data {
     // 当前能量值
     int32_t Now_Energy;
     // 当前状态, 指示是否可用
@@ -85,8 +80,7 @@ struct Struct_Supercap_24_Rx_Data
  * @brief 控制板给超级电容的源数据
  *
  */
-struct Struct_Supercap_24_CAN_Tx_Data
-{
+struct Struct_Supercap_24_CAN_Tx_Data {
     uint16_t Power_Limit_Max;
     uint16_t Chassis_Buffer_Energy;
     uint16_t Power_Compensate_Max;
@@ -98,12 +92,11 @@ struct Struct_Supercap_24_CAN_Tx_Data
 
 /**
  * @brief Specialized, 超级电容
- * 
+ *
  */
-class Class_Supercap_24
-{
-public:
-    void Init(CAN_HandleTypeDef *hcan, uint16_t __CAN_Rx_ID = 0x030, uint16_t __CAN_Tx_ID = 0x02f);
+class Class_Supercap_24 {
+   public:
+    void Init(CAN_HandleTypeDef* hcan, uint16_t __CAN_Rx_ID = 0x030, uint16_t __CAN_Tx_ID = 0x02f);
 
     inline Enum_RM24_Supercap_Status Get_Status();
 
@@ -123,24 +116,24 @@ public:
 
     inline void Set_Buffer_Energy_Loop_Status(Enum_Supercap_24_Data_Status __Buffer_Energy_Loop_Status);
 
-    void CAN_RxCpltCallback(uint8_t *Rx_Data);
+    void CAN_RxCpltCallback(uint8_t* Rx_Data);
 
     void TIM_1000ms_Alive_PeriodElapsedCallback();
 
     void TIM_10ms_Send_PeriodElapsedCallback();
 
-protected:
+   protected:
     // 初始化相关常量
 
     // 绑定的CAN
-    Struct_CAN_Manage_Object *CAN_Manage_Object;
+    Struct_CAN_Manage_Object* CAN_Manage_Object;
     // 数据绑定的CAN ID, 切记避开0x201~0x20b
     // 收数据默认0x030
     uint16_t CAN_Rx_ID;
     // 发数据默认0x02f
     uint16_t CAN_Tx_ID;
     // 发送缓存区
-    uint8_t *Tx_Data;
+    uint8_t* Tx_Data;
 
     // 常量
 
@@ -190,8 +183,7 @@ protected:
  *
  * @return uint8_t 超级电容在线状态
  */
-inline Enum_RM24_Supercap_Status Class_Supercap_24::Get_Status()
-{
+inline Enum_RM24_Supercap_Status Class_Supercap_24::Get_Status() {
     return (Supercap_Status);
 }
 
@@ -200,8 +192,7 @@ inline Enum_RM24_Supercap_Status Class_Supercap_24::Get_Status()
  *
  * @return uint8_t 当前能量值
  */
-inline uint16_t Class_Supercap_24::Get_Now_Energy()
-{
+inline uint16_t Class_Supercap_24::Get_Now_Energy() {
     return (Rx_Data.Now_Energy);
 }
 
@@ -210,8 +201,7 @@ inline uint16_t Class_Supercap_24::Get_Now_Energy()
  *
  * @return Enum_Supercap_24_Energy_Status 当前状态, 指示是否可用
  */
-inline Enum_Supercap_24_Energy_Status Class_Supercap_24::Get_Energy_Status()
-{
+inline Enum_Supercap_24_Energy_Status Class_Supercap_24::Get_Energy_Status() {
     return (Rx_Data.Energy_Status);
 }
 
@@ -220,8 +210,7 @@ inline Enum_Supercap_24_Energy_Status Class_Supercap_24::Get_Energy_Status()
  *
  * @return float 底盘功率
  */
-inline float Class_Supercap_24::Get_Chassis_Power()
-{
+inline float Class_Supercap_24::Get_Chassis_Power() {
     return (Rx_Data.Chassis_Power);
 }
 
@@ -230,8 +219,7 @@ inline float Class_Supercap_24::Get_Chassis_Power()
  *
  * @param __Power_Limit_Max 比赛规则限制的功率
  */
-inline void Class_Supercap_24::Set_Power_Limit_Max(uint16_t __Power_Limit_Max)
-{
+inline void Class_Supercap_24::Set_Power_Limit_Max(uint16_t __Power_Limit_Max) {
     Power_Limit_Max = __Power_Limit_Max;
 }
 
@@ -240,8 +228,7 @@ inline void Class_Supercap_24::Set_Power_Limit_Max(uint16_t __Power_Limit_Max)
  *
  * @param __Chassis_Buffer_Energy 底盘缓冲能量
  */
-inline void Class_Supercap_24::Set_Chassis_Buffer_Energy(uint16_t __Chassis_Buffer_Energy)
-{
+inline void Class_Supercap_24::Set_Chassis_Buffer_Energy(uint16_t __Chassis_Buffer_Energy) {
     Chassis_Buffer_Energy = __Chassis_Buffer_Energy;
 }
 
@@ -250,8 +237,7 @@ inline void Class_Supercap_24::Set_Chassis_Buffer_Energy(uint16_t __Chassis_Buff
  *
  * @param __Power_Compensate_Max 超级电容可以补偿的最大功率值
  */
-inline void Class_Supercap_24::Set_Power_Compensate_Max(uint16_t __Power_Compensate_Max)
-{
+inline void Class_Supercap_24::Set_Power_Compensate_Max(uint16_t __Power_Compensate_Max) {
     Power_Compensate_Max = __Power_Compensate_Max;
 }
 
@@ -260,8 +246,7 @@ inline void Class_Supercap_24::Set_Power_Compensate_Max(uint16_t __Power_Compens
  *
  * @param __Supercap_Enable_Status 是否开启超级电容
  */
-inline void Class_Supercap_24::Set_Supercap_Enable_Status(Enum_Supercap_24_Data_Status __Supercap_Enable_Status)
-{
+inline void Class_Supercap_24::Set_Supercap_Enable_Status(Enum_Supercap_24_Data_Status __Supercap_Enable_Status) {
     Supercap_Enable_Status = __Supercap_Enable_Status;
 }
 
@@ -270,8 +255,7 @@ inline void Class_Supercap_24::Set_Supercap_Enable_Status(Enum_Supercap_24_Data_
  *
  * @param __Buffer_Energy_Loop_Status 是否开启能量缓冲环
  */
-inline void Class_Supercap_24::Set_Buffer_Energy_Loop_Status(Enum_Supercap_24_Data_Status __Buffer_Energy_Loop_Status)
-{
+inline void Class_Supercap_24::Set_Buffer_Energy_Loop_Status(Enum_Supercap_24_Data_Status __Buffer_Energy_Loop_Status) {
     Buffer_Energy_Loop_Status = __Buffer_Energy_Loop_Status;
 }
 

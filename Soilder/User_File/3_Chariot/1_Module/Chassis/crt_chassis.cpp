@@ -1,151 +1,141 @@
-/**
- * @file crt_chassis.cpp
- * @brief 底盘控制与航位推算系统实现
- * @details 
- * 1. 采用冗余观测器逻辑：通过 X、Y 两组电机互相校验，自动补偿打滑。
- * 2. 支持世界坐标系控制：内置旋转矩阵与一阶相位延迟预测补偿。
- * 3. 具备电机在线状态监测与安全保护（掉线重置原点）。
- */
-
 #include "crt_chassis.h"
-#include <cmath>
 
-/* ========================================================================= */
-/* =                         1. WorldPosition 航位推算                      = */
-/* ========================================================================= */
+/* ================== 1. WorldPosition 实现 ================== */
 
-void WorldPosition::init(const int32_t *x_p, const int32_t *x_m,
-                         const int32_t *y_p, const int32_t *y_m,
-                         Config cfg) {
-    m_x_p_ptr = x_p; m_x_m_ptr = x_m;
-    m_y_p_ptr = y_p; m_y_m_ptr = y_m;
+void WorldPosition::init(const int32_t* x_p, const int32_t* x_m, const int32_t* y_p, const int32_t* y_m, Config cfg) {
+    m_x_p_ptr = x_p;
+    m_x_m_ptr = x_m;
+    m_y_p_ptr = y_p;
+    m_y_m_ptr = y_m;
     m_cfg = cfg;
 
-    // 物理系数计算: 距离 = (脉冲 / 单圈总脉冲) * (2 * PI * 半径)
+    // 距离系数：(2 * PI * r) / (ppr * ratio)
     m_tick_to_dist = (2.0f * PI * m_cfg.wheel_radius) / (m_cfg.ppr * m_cfg.ratio);
 
     m_x_correction_m = 0.0f;
     m_y_correction_m = 0.0f;
     m_now_angle = 0.0f;
 
-    // 记录初始时刻的平均读数作为参考零点
-    float init_x_rot = (*m_x_p_ptr + *m_x_m_ptr) * m_tick_to_dist;
-    float init_y_rot = (*m_y_p_ptr + *m_y_m_ptr) * m_tick_to_dist;
-    m_last_shared_rot_m = (init_x_rot + init_y_rot) / 2.0f;
+    float32_t init_x_rot = (float32_t)(*m_x_p_ptr + *m_x_m_ptr) * m_tick_to_dist;
+    float32_t init_y_rot = (float32_t)(*m_y_p_ptr + *m_y_m_ptr) * m_tick_to_dist;
+    m_last_shared_rot_m = (init_x_rot + init_y_rot) * 0.5f;
 }
 
-/** @brief 重置参考原点：用于电机恢复在线时同步读数，防止角度突跳 */
 void WorldPosition::reset_origin() {
-    float cur_x = (*m_x_p_ptr + *m_x_m_ptr) * m_tick_to_dist + m_x_correction_m;
-    float cur_y = (*m_y_p_ptr + *m_y_m_ptr) * m_tick_to_dist + m_y_correction_m;
-    m_last_shared_rot_m = (cur_x + cur_y) / 2.0f;
+    // 使用 DSP 库进行浮点转换
+    float32_t cur_x = (float32_t)(*m_x_p_ptr + *m_x_m_ptr) * m_tick_to_dist + m_x_correction_m;
+    float32_t cur_y = (float32_t)(*m_y_p_ptr + *m_y_m_ptr) * m_tick_to_dist + m_y_correction_m;
+    m_last_shared_rot_m = (cur_x + cur_y) * 0.5f;
 }
 
 void WorldPosition::update() {
-    // 1. 获取当前读数（包含历史补偿量）
-    float current_x_rot_m = (*m_x_p_ptr + *m_x_m_ptr) * m_tick_to_dist + m_x_correction_m;
-    float current_y_rot_m = (*m_y_p_ptr + *m_y_m_ptr) * m_tick_to_dist + m_y_correction_m;
+    float32_t cur_x = (float32_t)(*m_x_p_ptr + *m_x_m_ptr) * m_tick_to_dist + m_x_correction_m;
+    float32_t cur_y = (float32_t)(*m_y_p_ptr + *m_y_m_ptr) * m_tick_to_dist + m_y_correction_m;
 
-    // 2. 计算本帧增量
-    float dx = current_x_rot_m - m_last_shared_rot_m;
-    float dy = current_y_rot_m - m_last_shared_rot_m;
-    float chosen_d_rot = 0.0f;
+    float32_t dx = cur_x - m_last_shared_rot_m;
+    float32_t dy = cur_y - m_last_shared_rot_m;
 
-    // 3. 冗余校验逻辑：
-    // 原理：正常旋转时 dx 应等于 dy。若不等，说明有一组电机打滑空转。
-    // 逻辑：取绝对值较小（位移较少）的一组作为真实值，并修正另一组的偏差。
-    if (std::abs(dx - dy) > 0.0001f) {
-        if (std::abs(dx) <= std::abs(dy)) {
+    float32_t abs_dx, abs_dy, abs_diff;
+    arm_abs_f32(&dx, &abs_dx, 1);
+    arm_abs_f32(&dy, &abs_dy, 1);
+
+    float32_t diff = dx - dy;
+    arm_abs_f32(&diff, &abs_diff, 1);
+
+    float32_t chosen_d_rot = 0.0f;
+
+    // 冗余逻辑与打滑边缘通报
+    if (abs_diff > 0.0001f) {
+        if (abs_dx <= abs_dy) {
             chosen_d_rot = dx;
-            m_y_correction_m += (dx - dy); // 强制 Y 组对齐 X 组进度
-            LOG_WARNING("Y轴疑似打滑，已向X轴对齐");
+            m_y_correction_m += diff;
+            if (m_slip_state != Y_SLIPPING) {
+                LOG_WARNING(
+                    "Chassis: Y-Axis slip "
+                    "detected. Syncing to X.");
+                m_slip_state = Y_SLIPPING;
+            }
         } else {
             chosen_d_rot = dy;
-            m_x_correction_m += (dy - dx); // 强制 X 组对齐 Y 组进度
-            LOG_WARNING("X轴疑似打滑，已向Y轴对齐");
+            m_x_correction_m -= diff;
+            if (m_slip_state != X_SLIPPING) {
+                LOG_WARNING(
+                    "Chassis: X-Axis slip "
+                    "detected. Syncing to Y.");
+                m_slip_state = X_SLIPPING;
+            }
         }
     } else {
-        chosen_d_rot = (dx + dy) / 2.0f; // 无明显误差则取平均
+        chosen_d_rot = (dx + dy) * 0.5f;
+        if (m_slip_state != NO_SLIP) {
+            LOG_INFO("Chassis: Slip recovered.");
+            m_slip_state = NO_SLIP;
+        }
     }
 
-    // 4. 增量转角度：theta_inc = arc / (2 * L)
-    // 这里的 2.0f 是因为我们用了两组对角电机的位移和
-    float d_theta = chosen_d_rot / (2.0f * m_cfg.wheelbase);
-    m_now_angle += d_theta;
+    // 角度更新
+    m_now_angle += chosen_d_rot / (2.0f * m_cfg.wheelbase);
 
-    // 5. 角度归一化 [-PI, PI]
-    if (m_now_angle > PI)  m_now_angle -= 2.0f * PI;
-    if (m_now_angle < -PI) m_now_angle += 2.0f * PI;
+    // 角度归一化使用 CMSIS-DSP 逻辑或手动快速逻辑
+    while (m_now_angle > PI) m_now_angle -= 2.0f * PI;
+    while (m_now_angle < -PI) m_now_angle += 2.0f * PI;
 
-    // 6. 更新历史读数
     m_last_shared_rot_m += chosen_d_rot;
 }
 
-/* ========================================================================= */
-/* =                            2. Chassis 底盘核心                         = */
-/* ========================================================================= */
+/* ================== 2. Chassis 实现 ================== */
 
-void Chassis::chassis_init(Class_Motor_DJI_C620 &x_p, Class_Motor_DJI_C620 &x_m, 
-                           Class_Motor_DJI_C620 &y_p, Class_Motor_DJI_C620 &y_m, 
+void Chassis::chassis_init(Class_Motor_DJI_C620& x_p,
+                           Class_Motor_DJI_C620& x_m,
+                           Class_Motor_DJI_C620& y_p,
+                           Class_Motor_DJI_C620& y_m,
                            WorldPosition::Config* cfg_in) {
-    m_motors[0] = &x_p; m_motors[1] = &x_m;
-    m_motors[2] = &y_p; m_motors[3] = &y_m;
+    m_motors[0] = &x_p;
+    m_motors[1] = &x_m;
+    m_motors[2] = &y_p;
+    m_motors[3] = &y_m;
 
     WorldPosition::Config cfg;
     if (cfg_in == nullptr) {
-        cfg.ppr = x_p.Encoder_Num_Per_Round; cfg.ratio = x_p.Get_Gearbox_Rate();
-        cfg.wheel_radius = 0.076f; cfg.wheelbase = 0.25f;
+        // 使用 DJI C620 默认参数
+        cfg.ppr = (float32_t)x_p.Encoder_Num_Per_Round;
+        cfg.ratio = (float32_t)x_p.Get_Gearbox_Rate();
+        cfg.wheel_radius = 0.076f;
+        cfg.wheelbase = 0.25f;
     } else {
         cfg = *cfg_in;
     }
 
     // 初始化推算器
-    m_worldPosition.init(
-        &x_p.Get_Rx_Data().Total_Encoder, &x_m.Get_Rx_Data().Total_Encoder,
-        &y_p.Get_Rx_Data().Total_Encoder, &y_m.Get_Rx_Data().Total_Encoder,
-        cfg);
+    m_worldPosition.init(&x_p.Get_Rx_Data().Total_Encoder,
+                         &x_m.Get_Rx_Data().Total_Encoder,
+                         &y_p.Get_Rx_Data().Total_Encoder,
+                         &y_m.Get_Rx_Data().Total_Encoder,
+                         cfg);
 
     m_radius = cfg.wheel_radius;
     m_gear_ratio = cfg.ratio;
-    // 物理量转换系数：线速度 V -> 电机端角速度 Omega
+    // 物理量转换系数：V -> Omega
     m_vel_to_omega_coeff = 1.0f / m_radius;
 }
 
-/**
- * @brief 底盘控制循环 (1ms)
- */
 void Chassis::TIM_1ms_Calculate_PeriodElapsedCallback() {
-    // bool all_motors_healthy = true;
+    // 1. 检查电机在线状态
+    bool all_motors_healthy = true;
 
-    // // 1. 电机状态检查与 PID 计算
-    // for(uint8_t i = 0; i < 4; i++) {
-    //     if(m_motors[i]->Get_Status() != Motor_DJI_Status_ENABLE) {
-    //         all_motors_healthy = false;
-    //         break; 
-    //     }
-    // }
-    
-    // // 安全策略：电机不全则重置原点并停止
-    // if(!all_motors_healthy) {
-    //     m_worldPosition.reset_origin(); 
-    //     for(uint8_t i = 0; i < 4; i++) {
-    //         m_motors[i]->Set_Target_Omega(0);
-    //         m_motors[i]->TIM_Calculate_PeriodElapsedCallback();
-    //         m_motors[i]->TIM_Power_Limit_After_Calculate_PeriodElapsedCallback();
-    //     }
-    //     return;
-    // }
+    // 1. 电机状态检查与 PID 计算
+    for (uint8_t i = 0; i < 4; i++) {
+        if (m_motors[i]->Get_Status() != Motor_DJI_Status_ENABLE) {
+            all_motors_healthy = false;
+            break;
+        }
+    }
 
-// --- 【新增：死区处理】 ---
-    // 只有当输入的绝对值大于 0.02 时才认为有有效输入
-    float deadzone = 0.02f;
-    float input_vx = (fabsf(m_target_vx) < deadzone) ? 0.0f : m_target_vx;
-    float input_vy = (fabsf(m_target_vy) < deadzone) ? 0.0f : m_target_vy;
-    float input_vw = (fabsf(m_target_vw) < deadzone) ? 0.0f : m_target_vw;
+    // 安全策略：电机不全则重置原点并停止
 
-    // 如果处理完死区后三个轴都没有输入，直接退出，防止电机产生电流啸叫
-    if(input_vx == 0.0f && input_vy == 0.0f && input_vw == 0.0f) {
-        for(uint8_t i = 0; i < 4; i++) {
+    if (!all_motors_healthy) {
+        m_worldPosition.reset_origin();
+        for (uint8_t i = 0; i < 4; i++) {
             m_motors[i]->Set_Target_Omega(0);
             m_motors[i]->TIM_Calculate_PeriodElapsedCallback();
             m_motors[i]->TIM_Power_Limit_After_Calculate_PeriodElapsedCallback();
@@ -153,72 +143,63 @@ void Chassis::TIM_1ms_Calculate_PeriodElapsedCallback() {
         return;
     }
 
-    // 2. 更新航位推算
-    // m_worldPosition.update(); 
+    // 2. 使用 arm_abs_f32 处理死区
+    float32_t abs_vx, abs_vy, abs_vw;
+    arm_abs_f32(&m_target_vx, &abs_vx, 1);
+    arm_abs_f32(&m_target_vy, &abs_vy, 1);
+    arm_abs_f32(&m_target_vw, &abs_vw, 1);
 
-    float exec_vx = input_vx;
-    float exec_vy = input_vy;
+    float32_t in_vx = (abs_vx < m_deadzone) ? 0.0f : m_target_vx;
+    float32_t in_vy = (abs_vy < m_deadzone) ? 0.0f : m_target_vy;
+    float32_t in_vw = (abs_vw < m_deadzone) ? 0.0f : m_target_vw;
 
-    // 3. 世界坐标系变换
+    if (in_vx == 0.0f && in_vy == 0.0f && in_vw == 0.0f) {
+        for (int i = 0; i < 4; i++) m_motors[i]->Set_Target_Omega(0);
+        return;
+    }
+
+    // 3. 更新航位推算
+    m_worldPosition.update();
+
+    float32_t exec_vx = in_vx;
+    float32_t exec_vy = in_vy;
+
+    // 4. 世界坐标系变换 (DSP 加速)
     if (m_is_world_frame) {
-        float angle_now = m_worldPosition.getAngle();
-        
-        // 获取电机输出轴反馈角速度平均值
-        float real_omega_w = (m_motors[0]->Get_Now_Omega() + m_motors[1]->Get_Now_Omega() + 
-                              m_motors[2]->Get_Now_Omega() + m_motors[3]->Get_Now_Omega()) 
-                              / 4.0f; 
-        
-        // 预测角度补偿延迟
-        float angle_predict = angle_now + real_omega_w * (m_delay_comp_ms * 0.001f);
+        float32_t angle_now = m_worldPosition.getAngle();
+        float32_t avg_omega = (m_motors[0]->Get_Now_Omega() + m_motors[1]->Get_Now_Omega() +
+                               m_motors[2]->Get_Now_Omega() + m_motors[3]->Get_Now_Omega()) *
+                              0.25f;
 
-        float sin_a = arm_sin_f32(angle_predict);
-        float cos_a = arm_cos_f32(angle_predict);
-        
-        // 使用经过死区处理后的 input 值进行旋转变换
-        exec_vx = input_vx * cos_a + input_vy * sin_a;
-        exec_vy = -input_vx * sin_a + input_vy * cos_a;
+        float32_t angle_predict = angle_now + avg_omega * (m_delay_comp_ms * 0.001f);
+
+        float32_t sin_a = arm_sin_f32(angle_predict);
+        float32_t cos_a = arm_cos_f32(angle_predict);
+
+        exec_vx = in_vx * cos_a + in_vy * sin_a;
+        exec_vy = -in_vx * sin_a + in_vy * cos_a;
     }
 
-    // 4. 逆运动学解算 (使用 exec_vx/y 和 input_vw)
-    float motor_v[4];
-    motor_v[0] =  exec_vx + input_vw; 
-    motor_v[1] = -exec_vx + input_vw; 
-    motor_v[2] =  exec_vy + input_vw; 
-    motor_v[3] = -exec_vy + input_vw;
+    // 5. 逆运动学与限幅 (使用 DSP 绝对值)
+    float32_t motor_v[4];
+    motor_v[0] = exec_vx + in_vw;
+    motor_v[1] = -exec_vx + in_vw;
+    motor_v[2] = exec_vy + in_vw;
+    motor_v[3] = -exec_vy + in_vw;
 
-    // 5. 整体限幅保护
-    const float max_v = 3.5f; 
-    float current_max = 0.0f;
+    float32_t current_max = 0.0f;
     for (int i = 0; i < 4; i++) {
-        if (fabsf(motor_v[i]) > current_max) current_max = fabsf(motor_v[i]);
+        float32_t abs_v;
+        arm_abs_f32(&motor_v[i], &abs_v, 1);
+        if (abs_v > current_max)
+            current_max = abs_v;
     }
-    float scale = (current_max > max_v) ? (max_v / current_max) : 1.0f;
 
-    // 6. 下发至电机
-    for (uint8_t i = 0; i < 4; i++) {
+    const float32_t max_v = 3.5f;
+    float32_t scale = (current_max > max_v) ? (max_v / current_max) : 1.0f;
+
+    for (int i = 0; i < 4; i++) {
         m_motors[i]->Set_Target_Omega(motor_v[i] * scale * m_vel_to_omega_coeff);
         m_motors[i]->TIM_Calculate_PeriodElapsedCallback();
-        m_motors[i]->TIM_Power_Limit_After_Calculate_PeriodElapsedCallback();
-    }
-}
-
-/**
- * @brief 离线重连监测 (100ms)
- */
-void Chassis::TIM_100ms_Alive_PeriodElapsedCallback(){
-    static uint8_t cnt[4] = {0};
-
-    for(uint8_t i = 0; i < 4; i++){
-        if(cnt[i] >= 10) continue;
-
-        m_motors[i]->TIM_100ms_Alive_PeriodElapsedCallback();
-        
-        if(m_motors[i]->Get_Status() != Motor_DJI_Status_ENABLE) {
-            cnt[i]++;
-            LOG_WARNING("电机" + std::to_string(i) + "掉线，重连中: " + std::to_string(cnt[i]));
-            if(cnt[i] >= 10) LOG_ERROR("电机" + std::to_string(i) + "彻底丢失");
-        } else {
-            cnt[i] = 0; // 恢复在线，重置计数
-        }
     }
 }

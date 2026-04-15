@@ -1,0 +1,24 @@
+# 基于 Google 编码规范
+BasedOnStyle: Google
+
+# 大括号换行策略
+BreakBeforeBraces: Attach
+
+# 限制单行字符长度
+ColumnLimit: 120
+
+# 针对函数参数：如果参数过长，每个参数占用一行
+AllowAllParametersOfDeclarationOnNextLine: false
+BinPackParameters: false
+
+# 针对枚举和数组（初始化列表）：如果过长，自动换行并对齐
+AlignAfterOpenBracket: Align
+BinPackArguments: false
+
+# 允许短的语句留在单行
+AllowShortBlocksOnASingleLine: Never
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: Never
+
+# 缩进宽度
+IndentWidth: 4

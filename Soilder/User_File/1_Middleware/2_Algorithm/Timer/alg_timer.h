@@ -24,8 +24,7 @@
  * @brief 状态
  *
  */
-enum Enum_Timer_Status
-{
+enum Enum_Timer_Status {
     Timer_Status_RESET = 0,
     Timer_Status_WAIT,
     Timer_Status_TRIGGER,
@@ -36,9 +35,8 @@ enum Enum_Timer_Status
  * @brief Reusable, 定时器本体, 一般以1ms为界
  *
  */
-class Class_Timer
-{
-public:
+class Class_Timer {
+   public:
     void Init(uint32_t __Delay);
 
     inline uint32_t Get_Tick();
@@ -49,7 +47,7 @@ public:
 
     void TIM_1ms_Calculate_PeriodElapsedCallback();
 
-protected:
+   protected:
     // 初始化相关常量
 
     // 常量
@@ -83,8 +81,7 @@ protected:
  *
  * @return 时钟计数
  */
-inline uint32_t Class_Timer::Get_Tick()
-{
+inline uint32_t Class_Timer::Get_Tick() {
     return (Tick);
 }
 
@@ -93,8 +90,7 @@ inline uint32_t Class_Timer::Get_Tick()
  *
  * @return 当前状态
  */
-inline Enum_Timer_Status Class_Timer::Get_Now_Status()
-{
+inline Enum_Timer_Status Class_Timer::Get_Now_Status() {
     return (Now_Status);
 }
 
@@ -103,16 +99,12 @@ inline Enum_Timer_Status Class_Timer::Get_Now_Status()
  *
  * @param __Now_Status 当前状态
  */
-inline void Class_Timer::Set_Delay(uint32_t __Delay)
-{
+inline void Class_Timer::Set_Delay(uint32_t __Delay) {
     Delay = __Delay;
     Tick = 0;
-    if (Delay != 0)
-    {
+    if (Delay != 0) {
         Now_Status = Timer_Status_WAIT;
-    }
-    else
-    {
+    } else {
         Now_Status = Timer_Status_RESET;
     }
 }

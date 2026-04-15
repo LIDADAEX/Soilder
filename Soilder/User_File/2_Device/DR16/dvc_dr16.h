@@ -51,8 +51,7 @@
  * @brief 遥控器DR16状态
  *
  */
-enum Enum_DR16_Status
-{
+enum Enum_DR16_Status {
     DR16_Status_DISABLE = 0,
     DR16_Status_ENABLE,
 };
@@ -61,8 +60,7 @@ enum Enum_DR16_Status
  * @brief 拨动开关状态
  *
  */
-enum Enum_DR16_Switch_Status
-{
+enum Enum_DR16_Switch_Status {
     DR16_Switch_Status_UP = 0,
     DR16_Switch_Status_TRIG_UP_MIDDLE,
     DR16_Switch_Status_TRIG_MIDDLE_UP,
@@ -76,8 +74,7 @@ enum Enum_DR16_Switch_Status
  * @brief 按键状态
  *
  */
-enum Enum_DR16_Key_Status
-{
+enum Enum_DR16_Key_Status {
     DR16_Key_Status_FREE = 0,
     DR16_Key_Status_TRIG_FREE_PRESSED,
     DR16_Key_Status_TRIG_PRESSED_FREE,
@@ -88,8 +85,7 @@ enum Enum_DR16_Key_Status
  * @brief DR16源数据
  *
  */
-struct Struct_DR16_UART_Data
-{
+struct Struct_DR16_UART_Data {
     uint64_t Channel_0 : 11;
     uint64_t Channel_1 : 11;
     uint64_t Channel_2 : 11;
@@ -109,8 +105,7 @@ struct Struct_DR16_UART_Data
  * @brief DR16经过处理的的数据, 摇杆信息经过归一化到-1~1, 鼠标信息有待进一步标定
  *
  */
-struct Struct_DR16_Data
-{
+struct Struct_DR16_Data {
     float Right_X;
     float Right_Y;
     float Left_X;
@@ -130,10 +125,9 @@ struct Struct_DR16_Data
  * @brief Specialized, 遥控器DR16
  *
  */
-class Class_DR16
-{
-public:
-    void Init(UART_HandleTypeDef *huart);
+class Class_DR16 {
+   public:
+    void Init(UART_HandleTypeDef* huart);
 
     inline Enum_DR16_Status Get_Status();
 
@@ -193,17 +187,17 @@ public:
 
     inline float Get_Yaw();
 
-    void UART_RxCpltCallback(uint8_t *Rx_Data, uint16_t Length);
+    void UART_RxCpltCallback(uint8_t* Rx_Data, uint16_t Length);
 
     void TIM_100ms_Alive_PeriodElapsedCallback();
 
     void TIM_1ms_Calculate_PeriodElapsedCallback();
 
-protected:
+   protected:
     // 初始化相关常量
 
     // 绑定的UART
-    Struct_UART_Manage_Object *UART_Manage_Object;
+    Struct_UART_Manage_Object* UART_Manage_Object;
 
     // 常量
 
@@ -236,9 +230,9 @@ protected:
 
     void Data_Process(uint16_t Length);
 
-    void _Judge_Switch(Enum_DR16_Switch_Status *Switch, uint8_t Status, uint8_t Pre_Status);
+    void _Judge_Switch(Enum_DR16_Switch_Status* Switch, uint8_t Status, uint8_t Pre_Status);
 
-    void _Judge_Key(Enum_DR16_Key_Status *Key, uint8_t Status, uint8_t Pre_Status);
+    void _Judge_Key(Enum_DR16_Key_Status* Key, uint8_t Status, uint8_t Pre_Status);
 };
 
 /* Exported variables --------------------------------------------------------*/
@@ -250,8 +244,7 @@ protected:
  *
  * @return Enum_DR16_Status 遥控器DR16在线状态
  */
-inline Enum_DR16_Status Class_DR16::Get_Status()
-{
+inline Enum_DR16_Status Class_DR16::Get_Status() {
     return (DR16_Status);
 }
 
@@ -260,8 +253,7 @@ inline Enum_DR16_Status Class_DR16::Get_Status()
  *
  * @return float 遥控器DR16右侧x轴摇杆状态
  */
-inline float Class_DR16::Get_Right_X()
-{
+inline float Class_DR16::Get_Right_X() {
     return (Data.Right_X);
 }
 
@@ -270,8 +262,7 @@ inline float Class_DR16::Get_Right_X()
  *
  * @return float 遥控器DR16右侧y轴摇杆状态
  */
-inline float Class_DR16::Get_Right_Y()
-{
+inline float Class_DR16::Get_Right_Y() {
     return (Data.Right_Y);
 }
 
@@ -280,8 +271,7 @@ inline float Class_DR16::Get_Right_Y()
  *
  * @return float 遥控器DR16左侧x轴摇杆状态
  */
-inline float Class_DR16::Get_Left_X()
-{
+inline float Class_DR16::Get_Left_X() {
     return (Data.Left_X);
 }
 
@@ -290,8 +280,7 @@ inline float Class_DR16::Get_Left_X()
  *
  * @return float 遥控器DR16左侧y轴摇杆状态
  */
-inline float Class_DR16::Get_Left_Y()
-{
+inline float Class_DR16::Get_Left_Y() {
     return (Data.Left_Y);
 }
 
@@ -300,8 +289,7 @@ inline float Class_DR16::Get_Left_Y()
  *
  * @return Enum_DR16_Switch_Status 遥控器DR16左侧拨动开关状态
  */
-inline Enum_DR16_Switch_Status Class_DR16::Get_Left_Switch()
-{
+inline Enum_DR16_Switch_Status Class_DR16::Get_Left_Switch() {
     return (Data.Left_Switch);
 }
 
@@ -310,8 +298,7 @@ inline Enum_DR16_Switch_Status Class_DR16::Get_Left_Switch()
  *
  * @return Enum_DR16_Switch_Status 遥控器DR16右侧拨动开关状态
  */
-inline Enum_DR16_Switch_Status Class_DR16::Get_Right_Switch()
-{
+inline Enum_DR16_Switch_Status Class_DR16::Get_Right_Switch() {
     return (Data.Right_Switch);
 }
 
@@ -320,8 +307,7 @@ inline Enum_DR16_Switch_Status Class_DR16::Get_Right_Switch()
  *
  * @return float 鼠标x轴状态
  */
-inline float Class_DR16::Get_Mouse_X()
-{
+inline float Class_DR16::Get_Mouse_X() {
     return (Data.Mouse_X);
 }
 
@@ -330,8 +316,7 @@ inline float Class_DR16::Get_Mouse_X()
  *
  * @return float 鼠标y轴状态
  */
-inline float Class_DR16::Get_Mouse_Y()
-{
+inline float Class_DR16::Get_Mouse_Y() {
     return (Data.Mouse_Y);
 }
 
@@ -340,8 +325,7 @@ inline float Class_DR16::Get_Mouse_Y()
  *
  * @return float 鼠标z轴状态
  */
-inline float Class_DR16::Get_Mouse_Z()
-{
+inline float Class_DR16::Get_Mouse_Z() {
     return (Data.Mouse_Z);
 }
 
@@ -350,8 +334,7 @@ inline float Class_DR16::Get_Mouse_Z()
  *
  * @return Enum_DR16_Key_Status 鼠标左键状态
  */
-inline Enum_DR16_Key_Status Class_DR16::Get_Mouse_Left_Key()
-{
+inline Enum_DR16_Key_Status Class_DR16::Get_Mouse_Left_Key() {
     return (Data.Mouse_Left_Key);
 }
 
@@ -360,8 +343,7 @@ inline Enum_DR16_Key_Status Class_DR16::Get_Mouse_Left_Key()
  *
  * @return Enum_DR16_Key_Status 鼠标右键状态
  */
-inline Enum_DR16_Key_Status Class_DR16::Get_Mouse_Right_Key()
-{
+inline Enum_DR16_Key_Status Class_DR16::Get_Mouse_Right_Key() {
     return (Data.Mouse_Right_Key);
 }
 
@@ -370,8 +352,7 @@ inline Enum_DR16_Key_Status Class_DR16::Get_Mouse_Right_Key()
  *
  * @return Enum_DR16_Key_Status 键盘W键状态
  */
-inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_W()
-{
+inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_W() {
     return (Data.Keyboard_Key[DR16_KEY_W]);
 }
 
@@ -380,8 +361,7 @@ inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_W()
  *
  * @return Enum_DR16_Key_Status 键盘S键状态
  */
-inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_S()
-{
+inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_S() {
     return (Data.Keyboard_Key[DR16_KEY_S]);
 }
 
@@ -390,8 +370,7 @@ inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_S()
  *
  * @return Enum_DR16_Key_Status 键盘A键状态
  */
-inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_A()
-{
+inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_A() {
     return (Data.Keyboard_Key[DR16_KEY_A]);
 }
 
@@ -400,8 +379,7 @@ inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_A()
  *
  * @return Enum_DR16_Key_Status 键盘D键状态
  */
-inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_D()
-{
+inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_D() {
     return (Data.Keyboard_Key[DR16_KEY_D]);
 }
 
@@ -410,8 +388,7 @@ inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_D()
  *
  * @return Enum_DR16_Key_Status 键盘Shift键状态
  */
-inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_Shift()
-{
+inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_Shift() {
     return (Data.Keyboard_Key[DR16_KEY_SHIFT]);
 }
 
@@ -420,8 +397,7 @@ inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_Shift()
  *
  * @return Enum_DR16_Key_Status 键盘Ctrl键状态
  */
-inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_Ctrl()
-{
+inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_Ctrl() {
     return (Data.Keyboard_Key[DR16_KEY_CTRL]);
 }
 
@@ -430,8 +406,7 @@ inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_Ctrl()
  *
  * @return Enum_DR16_Key_Status 键盘Q键状态
  */
-inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_Q()
-{
+inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_Q() {
     return (Data.Keyboard_Key[DR16_KEY_Q]);
 }
 
@@ -440,8 +415,7 @@ inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_Q()
  *
  * @return Enum_DR16_Key_Status 键盘E键状态
  */
-inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_E()
-{
+inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_E() {
     return (Data.Keyboard_Key[DR16_KEY_E]);
 }
 
@@ -450,8 +424,7 @@ inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_E()
  *
  * @return Enum_DR16_Key_Status 键盘R键状态
  */
-inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_R()
-{
+inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_R() {
     return (Data.Keyboard_Key[DR16_KEY_R]);
 }
 
@@ -460,8 +433,7 @@ inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_R()
  *
  * @return Enum_DR16_Key_Status 键盘F键状态
  */
-inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_F()
-{
+inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_F() {
     return (Data.Keyboard_Key[DR16_KEY_F]);
 }
 
@@ -470,8 +442,7 @@ inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_F()
  *
  * @return Enum_DR16_Key_Status 键盘G键状态
  */
-inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_G()
-{
+inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_G() {
     return (Data.Keyboard_Key[DR16_KEY_G]);
 }
 
@@ -480,8 +451,7 @@ inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_G()
  *
  * @return Enum_DR16_Key_Status 键盘Z键状态
  */
-inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_Z()
-{
+inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_Z() {
     return (Data.Keyboard_Key[DR16_KEY_Z]);
 }
 
@@ -490,8 +460,7 @@ inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_Z()
  *
  * @return Enum_DR16_Key_Status 键盘X键状态
  */
-inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_X()
-{
+inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_X() {
     return (Data.Keyboard_Key[DR16_KEY_X]);
 }
 
@@ -500,8 +469,7 @@ inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_X()
  *
  * @return Enum_DR16_Key_Status 键盘C键状态
  */
-inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_C()
-{
+inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_C() {
     return (Data.Keyboard_Key[DR16_KEY_C]);
 }
 
@@ -510,8 +478,7 @@ inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_C()
  *
  * @return Enum_DR16_Key_Status 键盘V键状态
  */
-inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_V()
-{
+inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_V() {
     return (Data.Keyboard_Key[DR16_KEY_V]);
 }
 
@@ -520,8 +487,7 @@ inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_V()
  *
  * @return Enum_DR16_Key_Status 键盘B键状态
  */
-inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_B()
-{
+inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_B() {
     return (Data.Keyboard_Key[DR16_KEY_B]);
 }
 
@@ -530,8 +496,7 @@ inline Enum_DR16_Key_Status Class_DR16::Get_Keyboard_Key_B()
  *
  * @return float 遥控器DR16yaw轴状态
  */
-inline float Class_DR16::Get_Yaw()
-{
+inline float Class_DR16::Get_Yaw() {
     return (Data.Yaw);
 }
 

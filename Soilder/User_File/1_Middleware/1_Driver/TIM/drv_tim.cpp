@@ -46,75 +46,47 @@ Struct_TIM_Manage_Object TIM14_Manage_Object;
  * @param htim 定时器编号
  * @param Callback_Function 处理回调函数
  */
-void TIM_Init(TIM_HandleTypeDef *htim, TIM_Call_Back Callback_Function)
-{
-    if (htim->Instance == TIM1)
-    {
+void TIM_Init(TIM_HandleTypeDef* htim, TIM_Call_Back Callback_Function) {
+    if (htim->Instance == TIM1) {
         TIM1_Manage_Object.TIM_Handler = htim;
         TIM1_Manage_Object.Callback_Function = Callback_Function;
-    }
-    else if (htim->Instance == TIM2)
-    {
+    } else if (htim->Instance == TIM2) {
         TIM2_Manage_Object.TIM_Handler = htim;
         TIM2_Manage_Object.Callback_Function = Callback_Function;
-    }
-    else if (htim->Instance == TIM3)
-    {
+    } else if (htim->Instance == TIM3) {
         TIM3_Manage_Object.TIM_Handler = htim;
         TIM3_Manage_Object.Callback_Function = Callback_Function;
-    }
-    else if (htim->Instance == TIM4)
-    {
+    } else if (htim->Instance == TIM4) {
         TIM4_Manage_Object.TIM_Handler = htim;
         TIM4_Manage_Object.Callback_Function = Callback_Function;
-    }
-    else if (htim->Instance == TIM5)
-    {
+    } else if (htim->Instance == TIM5) {
         TIM5_Manage_Object.TIM_Handler = htim;
         TIM5_Manage_Object.Callback_Function = Callback_Function;
-    }
-    else if (htim->Instance == TIM6)
-    {
+    } else if (htim->Instance == TIM6) {
         TIM6_Manage_Object.TIM_Handler = htim;
         TIM6_Manage_Object.Callback_Function = Callback_Function;
-    }
-    else if (htim->Instance == TIM7)
-    {
+    } else if (htim->Instance == TIM7) {
         TIM7_Manage_Object.TIM_Handler = htim;
         TIM7_Manage_Object.Callback_Function = Callback_Function;
-    }
-    else if (htim->Instance == TIM8)
-    {
+    } else if (htim->Instance == TIM8) {
         TIM8_Manage_Object.TIM_Handler = htim;
         TIM8_Manage_Object.Callback_Function = Callback_Function;
-    }
-    else if (htim->Instance == TIM9)
-    {
+    } else if (htim->Instance == TIM9) {
         TIM9_Manage_Object.TIM_Handler = htim;
         TIM9_Manage_Object.Callback_Function = Callback_Function;
-    }
-    else if (htim->Instance == TIM10)
-    {
+    } else if (htim->Instance == TIM10) {
         TIM10_Manage_Object.TIM_Handler = htim;
         TIM10_Manage_Object.Callback_Function = Callback_Function;
-    }
-    else if (htim->Instance == TIM11)
-    {
+    } else if (htim->Instance == TIM11) {
         TIM11_Manage_Object.TIM_Handler = htim;
         TIM11_Manage_Object.Callback_Function = Callback_Function;
-    }
-    else if (htim->Instance == TIM12)
-    {
+    } else if (htim->Instance == TIM12) {
         TIM12_Manage_Object.TIM_Handler = htim;
         TIM12_Manage_Object.Callback_Function = Callback_Function;
-    }
-    else if (htim->Instance == TIM13)
-    {
+    } else if (htim->Instance == TIM13) {
         TIM13_Manage_Object.TIM_Handler = htim;
         TIM13_Manage_Object.Callback_Function = Callback_Function;
-    }
-    else if (htim->Instance == TIM14)
-    {
+    } else if (htim->Instance == TIM14) {
         TIM14_Manage_Object.TIM_Handler = htim;
         TIM14_Manage_Object.Callback_Function = Callback_Function;
     }
@@ -125,110 +97,67 @@ void TIM_Init(TIM_HandleTypeDef *htim, TIM_Call_Back Callback_Function)
  *
  * @param htim TIM编号
  */
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
-{
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim) {
     // 判断程序初始化完成
-    if (init_finished == false)
-    {
+    if (init_finished == false) {
         return;
     }
 
     // 选择回调函数
-    if (htim->Instance == TIM1)
-    {
-        if(TIM1_Manage_Object.Callback_Function != nullptr)
-        {
+    if (htim->Instance == TIM1) {
+        if (TIM1_Manage_Object.Callback_Function != nullptr) {
             TIM1_Manage_Object.Callback_Function();
         }
-    }
-    else if (htim->Instance == TIM2)
-    {
-        if(TIM2_Manage_Object.Callback_Function != nullptr)
-        {
+    } else if (htim->Instance == TIM2) {
+        if (TIM2_Manage_Object.Callback_Function != nullptr) {
             TIM2_Manage_Object.Callback_Function();
         }
-    }
-    else if (htim->Instance == TIM3)
-    {
-        if(TIM3_Manage_Object.Callback_Function != nullptr)
-        {
+    } else if (htim->Instance == TIM3) {
+        if (TIM3_Manage_Object.Callback_Function != nullptr) {
             TIM3_Manage_Object.Callback_Function();
         }
-    }
-    else if (htim->Instance == TIM4)
-    {
-        if(TIM4_Manage_Object.Callback_Function != nullptr)
-        {
+    } else if (htim->Instance == TIM4) {
+        if (TIM4_Manage_Object.Callback_Function != nullptr) {
             TIM4_Manage_Object.Callback_Function();
         }
-    }
-    else if (htim->Instance == TIM5)
-    {
-        if(TIM5_Manage_Object.Callback_Function != nullptr)
-        {
+    } else if (htim->Instance == TIM5) {
+        if (TIM5_Manage_Object.Callback_Function != nullptr) {
             TIM5_Manage_Object.Callback_Function();
         }
-    }
-    else if (htim->Instance == TIM6)
-    {
-        if(TIM6_Manage_Object.Callback_Function != nullptr)
-        {
+    } else if (htim->Instance == TIM6) {
+        if (TIM6_Manage_Object.Callback_Function != nullptr) {
             TIM6_Manage_Object.Callback_Function();
         }
-    }
-    else if (htim->Instance == TIM7)
-    {
-        if(TIM7_Manage_Object.Callback_Function != nullptr)
-        {
+    } else if (htim->Instance == TIM7) {
+        if (TIM7_Manage_Object.Callback_Function != nullptr) {
             TIM7_Manage_Object.Callback_Function();
         }
-    }
-    else if (htim->Instance == TIM8)
-    {
-        if(TIM8_Manage_Object.Callback_Function != nullptr)
-        {
+    } else if (htim->Instance == TIM8) {
+        if (TIM8_Manage_Object.Callback_Function != nullptr) {
             TIM8_Manage_Object.Callback_Function();
         }
-    }
-    else if (htim->Instance == TIM9)
-    {
-        if(TIM9_Manage_Object.Callback_Function != nullptr)
-        {
+    } else if (htim->Instance == TIM9) {
+        if (TIM9_Manage_Object.Callback_Function != nullptr) {
             TIM9_Manage_Object.Callback_Function();
         }
-    }
-    else if (htim->Instance == TIM10)
-    {
-        if(TIM10_Manage_Object.Callback_Function != nullptr)
-        {
+    } else if (htim->Instance == TIM10) {
+        if (TIM10_Manage_Object.Callback_Function != nullptr) {
             TIM10_Manage_Object.Callback_Function();
         }
-    }
-    else if (htim->Instance == TIM11)
-    {
-        if(TIM11_Manage_Object.Callback_Function != nullptr)
-        {
+    } else if (htim->Instance == TIM11) {
+        if (TIM11_Manage_Object.Callback_Function != nullptr) {
             TIM11_Manage_Object.Callback_Function();
         }
-    }
-    else if (htim->Instance == TIM12)
-    {
-        if(TIM12_Manage_Object.Callback_Function != nullptr)
-        {
+    } else if (htim->Instance == TIM12) {
+        if (TIM12_Manage_Object.Callback_Function != nullptr) {
             TIM12_Manage_Object.Callback_Function();
         }
-    }
-    else if (htim->Instance == TIM13)
-    {
-        if(TIM13_Manage_Object.Callback_Function != nullptr)
-        {
+    } else if (htim->Instance == TIM13) {
+        if (TIM13_Manage_Object.Callback_Function != nullptr) {
             TIM13_Manage_Object.Callback_Function();
         }
-    }
-    else if (htim->Instance == TIM14)
-    {
-        if(TIM14_Manage_Object.Callback_Function != nullptr)
-        {
+    } else if (htim->Instance == TIM14) {
+        if (TIM14_Manage_Object.Callback_Function != nullptr) {
             TIM14_Manage_Object.Callback_Function();
         }
     }

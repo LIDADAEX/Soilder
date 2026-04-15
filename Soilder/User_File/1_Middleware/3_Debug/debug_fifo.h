@@ -1,8 +1,8 @@
 #ifndef DEBUG_FIFO_H
 #define DEBUG_FIFO_H
 
-#include <string>
 #include <cstdint>
+#include <string>
 
 #define DEBUG_FIFO_SIZE 256
 
@@ -11,12 +11,12 @@
  * 用于异步接收串口数据，并从中解析出以特定分隔符开始、换行符结束的指令
  */
 class Class_Debug_FIFO {
-private:
+   private:
     uint8_t buffer[DEBUG_FIFO_SIZE];
-    uint16_t head = 0; // 写指针
-    uint16_t tail = 0; // 读指针
+    uint16_t head = 0;  // 写指针
+    uint16_t tail = 0;  // 读指针
 
-public:
+   public:
     /**
      * @brief 写入单个字节到 FIFO
      * @param data 接收到的原始字节
