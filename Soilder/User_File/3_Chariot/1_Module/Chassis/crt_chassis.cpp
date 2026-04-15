@@ -93,7 +93,7 @@ void Chassis::chassis_init(Class_Motor_DJI_C620 &x_p, Class_Motor_DJI_C620 &x_m,
 
     WorldPosition::Config cfg;
     if (cfg_in == nullptr) {
-        cfg.ppr = 8192.0f; cfg.ratio = 19.2032f; // 3591/187
+        cfg.ppr = x_p.Encoder_Num_Per_Round; cfg.ratio = x_p.Get_Gearbox_Rate();
         cfg.wheel_radius = 0.076f; cfg.wheelbase = 0.25f;
     } else {
         cfg = *cfg_in;
@@ -108,79 +108,97 @@ void Chassis::chassis_init(Class_Motor_DJI_C620 &x_p, Class_Motor_DJI_C620 &x_m,
     m_radius = cfg.wheel_radius;
     m_gear_ratio = cfg.ratio;
     // 物理量转换系数：线速度 V -> 电机端角速度 Omega
-    m_vel_to_omega_coeff = (1.0f / m_radius) * m_gear_ratio;
+    m_vel_to_omega_coeff = 1.0f / m_radius;
 }
 
 /**
  * @brief 底盘控制循环 (1ms)
  */
 void Chassis::TIM_1ms_Calculate_PeriodElapsedCallback() {
-    bool all_motors_healthy = true;
+    // bool all_motors_healthy = true;
 
-    // 1. 电机状态检查与 PID 计算
-    for(uint8_t i = 0; i < 4; i++) {
-        if(m_motors[i]->Get_Status() != Motor_DJI_Status_ENABLE) {
-            all_motors_healthy = false;
-            continue; 
-        }
-        m_motors[i]->TIM_Calculate_PeriodElapsedCallback();
-        m_motors[i]->TIM_Power_Limit_After_Calculate_PeriodElapsedCallback();
-    }
+    // // 1. 电机状态检查与 PID 计算
+    // for(uint8_t i = 0; i < 4; i++) {
+    //     if(m_motors[i]->Get_Status() != Motor_DJI_Status_ENABLE) {
+    //         all_motors_healthy = false;
+    //         break; 
+    //     }
+    // }
     
-    // 安全策略：电机不全则重置原点并停止
-    if(!all_motors_healthy) {
-        m_worldPosition.reset_origin(); 
+    // // 安全策略：电机不全则重置原点并停止
+    // if(!all_motors_healthy) {
+    //     m_worldPosition.reset_origin(); 
+    //     for(uint8_t i = 0; i < 4; i++) {
+    //         m_motors[i]->Set_Target_Omega(0);
+    //         m_motors[i]->TIM_Calculate_PeriodElapsedCallback();
+    //         m_motors[i]->TIM_Power_Limit_After_Calculate_PeriodElapsedCallback();
+    //     }
+    //     return;
+    // }
+
+// --- 【新增：死区处理】 ---
+    // 只有当输入的绝对值大于 0.02 时才认为有有效输入
+    float deadzone = 0.02f;
+    float input_vx = (fabsf(m_target_vx) < deadzone) ? 0.0f : m_target_vx;
+    float input_vy = (fabsf(m_target_vy) < deadzone) ? 0.0f : m_target_vy;
+    float input_vw = (fabsf(m_target_vw) < deadzone) ? 0.0f : m_target_vw;
+
+    // 如果处理完死区后三个轴都没有输入，直接退出，防止电机产生电流啸叫
+    if(input_vx == 0.0f && input_vy == 0.0f && input_vw == 0.0f) {
+        for(uint8_t i = 0; i < 4; i++) {
+            m_motors[i]->Set_Target_Omega(0);
+            m_motors[i]->TIM_Calculate_PeriodElapsedCallback();
+            m_motors[i]->TIM_Power_Limit_After_Calculate_PeriodElapsedCallback();
+        }
         return;
     }
 
-    // 无控制输入则直接跳过后续解算
-    if(!m_target_vx && !m_target_vy && !m_target_vw) return;
+    // 2. 更新航位推算
+    // m_worldPosition.update(); 
 
-    // 2. 更新位置信息
-    m_worldPosition.update(); 
+    float exec_vx = input_vx;
+    float exec_vy = input_vy;
 
-    float exec_vx = m_target_vx;
-    float exec_vy = m_target_vy;
-
-    // 3. 世界坐标系变换 (坐标映射与相位补偿)
+    // 3. 世界坐标系变换
     if (m_is_world_frame) {
         float angle_now = m_worldPosition.getAngle();
         
-        // 计算真实旋转角速度 (用于一阶预测补偿角度延迟)
+        // 获取电机输出轴反馈角速度平均值
         float real_omega_w = (m_motors[0]->Get_Now_Omega() + m_motors[1]->Get_Now_Omega() + 
                               m_motors[2]->Get_Now_Omega() + m_motors[3]->Get_Now_Omega()) 
-                              / (4.0f * m_gear_ratio); 
+                              / 4.0f; 
         
-        // 预测角度 = 当前角度 + 速度 * 采样延迟补偿
+        // 预测角度补偿延迟
         float angle_predict = angle_now + real_omega_w * (m_delay_comp_ms * 0.001f);
 
-        // 旋转矩阵变换 (世界坐标 -> 机器人坐标)
         float sin_a = arm_sin_f32(angle_predict);
         float cos_a = arm_cos_f32(angle_predict);
-        exec_vx = m_target_vx * cos_a + m_target_vy * sin_a;
-        exec_vy = -m_target_vx * sin_a + m_target_vy * cos_a;
+        
+        // 使用经过死区处理后的 input 值进行旋转变换
+        exec_vx = input_vx * cos_a + input_vy * sin_a;
+        exec_vy = -input_vx * sin_a + input_vy * cos_a;
     }
 
-    // 4. 逆运动学解算：计算四轮线速度
-    // 注意：这里的方向符号取决于具体的物理建模排布
+    // 4. 逆运动学解算 (使用 exec_vx/y 和 input_vw)
     float motor_v[4];
-    motor_v[0] =  exec_vx + m_target_vw; // 前左
-    motor_v[1] = -exec_vx + m_target_vw; // 后右
-    motor_v[2] =  exec_vy + m_target_vw; // 前右
-    motor_v[3] = -exec_vy + m_target_vw; // 后左
+    motor_v[0] =  exec_vx + input_vw; 
+    motor_v[1] = -exec_vx + input_vw; 
+    motor_v[2] =  exec_vy + input_vw; 
+    motor_v[3] = -exec_vy + input_vw;
 
-    // 5. 整体限幅保护：保持速度向量方向不变的前提下等比例缩小
+    // 5. 整体限幅保护
     const float max_v = 3.5f; 
     float current_max = 0.0f;
     for (int i = 0; i < 4; i++) {
         if (fabsf(motor_v[i]) > current_max) current_max = fabsf(motor_v[i]);
     }
-
     float scale = (current_max > max_v) ? (max_v / current_max) : 1.0f;
 
     // 6. 下发至电机
-    for (int i = 0; i < 4; i++) {
+    for (uint8_t i = 0; i < 4; i++) {
         m_motors[i]->Set_Target_Omega(motor_v[i] * scale * m_vel_to_omega_coeff);
+        m_motors[i]->TIM_Calculate_PeriodElapsedCallback();
+        m_motors[i]->TIM_Power_Limit_After_Calculate_PeriodElapsedCallback();
     }
 }
 

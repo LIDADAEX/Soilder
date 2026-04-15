@@ -174,8 +174,10 @@ inline void handle_motor_get(const std::string subSrcList[], uint8_t count) {
         switch (state) {
             case EnumCmdMotorStateList::target_angle:    printf("电机%d 目标角度: %f\r\n", motorNumber, targetMotor->Get_Target_Angle()); break;
             case EnumCmdMotorStateList::target_omega:    printf("电机%d 目标速度: %f\r\n", motorNumber, targetMotor->Get_Target_Omega()); break;
+            case EnumCmdMotorStateList::target_current:  printf("电机%d 目标电流: %f\r\n", motorNumber, targetMotor->Get_Target_Current()); break;
             case EnumCmdMotorStateList::current_angle:   printf("电机%d 当前角度: %f\r\n", motorNumber, targetMotor->Get_Now_Angle()); break;
             case EnumCmdMotorStateList::current_omega:   printf("电机%d 当前速度: %f\r\n", motorNumber, targetMotor->Get_Now_Omega()); break;
+            case EnumCmdMotorStateList::current_current: printf("电机%d 当前电流: %f\r\n", motorNumber, targetMotor->Get_Now_Current()); break;
             case EnumCmdMotorStateList::current_power:   printf("电机%d 实时功率: %f W\r\n", motorNumber, targetMotor->Get_Now_Power()); break;
             default: errorHandle("motor get", &CmdMotorStateList); break;
         }
@@ -305,9 +307,10 @@ inline void handle_remote_get(const std::string subSrcList[], uint8_t count) {
                 printf("Remote Offline!\r\n");
                 break;
             }
-            printf("Stick_LX: %.3f, Stick_LY: %.3f | Stick_RX: %.3f, Stick_RY: %.3f\r\n",
+            printf("Stick_LX: %.3f, Stick_LY: %.3f | Stick_RX: %.3f, Stick_RY: %.3f, Yaw: %.3f\r\n",
                    dr16.Get_Left_X(),  dr16.Get_Left_Y(),
-                   dr16.Get_Right_X(), dr16.Get_Right_Y());
+                   dr16.Get_Right_X(), dr16.Get_Right_Y(),
+                   dr16.Get_Yaw());
             break;
 
         default:
@@ -332,10 +335,6 @@ inline void handle_remote_cmd(const std::string subSrcList[], uint8_t count) {
         case EnumCmdRemoteList::get:
             handle_remote_get(subSrcList, count);
             break;
-
-        // case EnumCmdRemoteList::put: 
-        //     handle_remote_put(subSrcList, count); // 以后扩展极其方便
-        //     break;
 
         default:
             errorHandle("remote", &CmdRemoteList);

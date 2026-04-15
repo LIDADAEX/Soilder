@@ -60,8 +60,7 @@ Chassis chassis;
 
 Class_DR16 dr16;
 
-bool flag_chassisTIM_1ms = false;
-bool flag_dr16TIM_1ms = false;
+bool flag_1ms = false;
 
 bool readFlag(bool& flag){
     bool flagTemp = flag;
@@ -78,12 +77,12 @@ void Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
         motor_x_p.CAN_RxCpltCallback(CAN_RxMessage->Data);
     }
     break;
-    case (0x202):
+    case (0x203):
     {
         motor_x_m.CAN_RxCpltCallback(CAN_RxMessage->Data);
     }
     break;
-    case (0x203):
+    case (0x202):
     {
         motor_y_p.CAN_RxCpltCallback(CAN_RxMessage->Data);
     }
@@ -96,18 +95,27 @@ void Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
     }
 }
 
-void Device_UART_RxCpltCallback(uint8_t *Rx_Data, uint16_t Length){
+void DR16_UART3_Callback(uint8_t *Rx_Data, uint16_t Length){
     dr16.UART_RxCpltCallback(Rx_Data, Length);
+    chassis.Set_Control_Target(dr16.Get_Left_X(), dr16.Get_Left_Y(), dr16.Get_Yaw(), false);
 }
+
+bool test_motor = false;
 
 void HAL_SYSTICK_Callback(void)
 {
-    flag_chassisTIM_1ms = true;
-    flag_dr16TIM_1ms = true;
+    flag_1ms = true;
+    // test_motor = true;
 }
 
+// bool flag_check = false;
+// static uint32_t lastTime = HAL_GetTick();
+// static uint32_t nowTime;
+
 void TIM_100ms_PeriodElapsedCallback(){
-    chassis.TIM_100ms_Alive_PeriodElapsedCallback();
+    // chassis.TIM_100ms_Alive_PeriodElapsedCallback();
+    // nowTime = HAL_GetTick();
+    // flag_check = true;
     dr16.TIM_100ms_Alive_PeriodElapsedCallback();
 }
 
@@ -120,14 +128,25 @@ void Task_Init()
     CAN_Init(&hcan1, Device_CAN1_Callback);
     TIM_Init(&htim3, TIM_100ms_PeriodElapsedCallback);
 
+    UART_Init(&huart3, DR16_UART3_Callback, 18);
+    dr16.Init(&huart3);
+    LOG_INFO("遥控器初始化完成");
+
     motor_x_p.Init(&hcan1, Motor_DJI_ID_0x201);
-    motor_x_m.Init(&hcan1, Motor_DJI_ID_0x202);
-    motor_y_p.Init(&hcan1, Motor_DJI_ID_0x203);
+    motor_x_p.PID_Omega.Init(0.5, 0, 0);
+    motor_x_m.Init(&hcan1, Motor_DJI_ID_0x203);
+    motor_x_m.PID_Omega.Init(0.5, 0, 0);
+    motor_y_p.Init(&hcan1, Motor_DJI_ID_0x202);
+    motor_y_p.PID_Omega.Init(0.5, 0, 0);
     motor_y_m.Init(&hcan1, Motor_DJI_ID_0x204);
+    motor_y_m.PID_Omega.Init(0.5, 0, 0);
     LOG_INFO("底盘电机初始化完成");
 
-    // UART_Init(&huart2, Device_UART_RxCpltCallback, UART_BUFFER_SIZE);
-    // dr16.Init(&huart2);
+    chassis.chassis_init(motor_x_p, motor_x_m, motor_y_p, motor_y_m);
+    LOG_INFO("底盘初始化完成");
+
+    init_finished = true;
+    HAL_TIM_Base_Start_IT(&htim3);
 }
 
 /**
@@ -138,15 +157,29 @@ void Task_Loop()
 {
 	Debug_Cmd_Poll_Callback();
 
-    if(readFlag(flag_chassisTIM_1ms)){
+    // if(readFlag(test_motor)){
+    //     motor_x_p.TIM_Calculate_PeriodElapsedCallback();
+    // }
+        
+    // if(readFlag(flag_dr16TIM_1ms)){
+    //     dr16.TIM_1ms_Calculate_PeriodElapsedCallback();
+    // }
+
+    // if(readFlag(flag_check)){
+    //     LOG_WARNING("检查！" + std::to_string(nowTime - lastTime));
+    //     lastTime = nowTime;
+    // }
+
+    if(readFlag(flag_1ms)){
+        TIM_1ms_CAN_PeriodElapsedCallback();
+
         if(dr16.Get_Status() == DR16_Status_ENABLE){
-            chassis.Set_Control_Target(dr16.Get_Left_X(), dr16.Get_Left_Y(), dr16.Get_Right_X(), true);
             chassis.TIM_1ms_Calculate_PeriodElapsedCallback();
         }
+
+        CAN_Send_Data(&hcan1, 0x200, CAN1_0x200_Tx_Data, 8);
     }
         
-    if(readFlag(flag_dr16TIM_1ms))
-        dr16.TIM_1ms_Calculate_PeriodElapsedCallback();
 }
 
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/

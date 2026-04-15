@@ -186,7 +186,7 @@ uint8_t CAN_Send_Data(CAN_HandleTypeDef *hcan, uint16_t ID, uint8_t *Data, uint1
  */
 void TIM_1ms_CAN_PeriodElapsedCallback()
 {
-    // DJI电机专属
+    CAN_Send_Data(&hcan1, 0x200, CAN1_0x200_Tx_Data, 8);
 }
 
 /**
@@ -196,17 +196,12 @@ void TIM_1ms_CAN_PeriodElapsedCallback()
  */
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
-    // 判断程序初始化完成
-    if (init_finished == false)
-    {
-        return;
-    }
-
     // 选择回调函数
     if (hcan->Instance == CAN1)
     {
         HAL_CAN_GetRxMessage(hcan, CAN_FILTER_FIFO0, &CAN1_Manage_Object.Rx_Buffer.Header, CAN1_Manage_Object.Rx_Buffer.Data);
-        if(CAN1_Manage_Object.Callback_Function != nullptr)
+        
+        if(CAN1_Manage_Object.Callback_Function != nullptr && init_finished)
         {
             CAN1_Manage_Object.Callback_Function(&CAN1_Manage_Object.Rx_Buffer);
         }
@@ -214,7 +209,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
     else if (hcan->Instance == CAN2)
     {
         HAL_CAN_GetRxMessage(hcan, CAN_FILTER_FIFO0, &CAN2_Manage_Object.Rx_Buffer.Header, CAN2_Manage_Object.Rx_Buffer.Data);
-        if(CAN2_Manage_Object.Callback_Function != nullptr)
+        if(CAN2_Manage_Object.Callback_Function != nullptr && init_finished)
         {
             CAN2_Manage_Object.Callback_Function(&CAN2_Manage_Object.Rx_Buffer);
         }
@@ -228,17 +223,11 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
  */
 void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
-    // 判断程序初始化完成
-    if (init_finished == false)
-    {
-        return;
-    }
-
     // 选择回调函数
     if (hcan->Instance == CAN1)
     {
         HAL_CAN_GetRxMessage(hcan, CAN_FILTER_FIFO1, &CAN1_Manage_Object.Rx_Buffer.Header, CAN1_Manage_Object.Rx_Buffer.Data);
-        if(CAN1_Manage_Object.Callback_Function != nullptr)
+        if(CAN1_Manage_Object.Callback_Function != nullptr && init_finished)
         {
             CAN1_Manage_Object.Callback_Function(&CAN1_Manage_Object.Rx_Buffer);
         }
@@ -246,7 +235,7 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
     else if (hcan->Instance == CAN2)
     {
         HAL_CAN_GetRxMessage(hcan, CAN_FILTER_FIFO1, &CAN2_Manage_Object.Rx_Buffer.Header, CAN2_Manage_Object.Rx_Buffer.Data);
-        if(CAN2_Manage_Object.Callback_Function != nullptr)
+        if(CAN2_Manage_Object.Callback_Function != nullptr && init_finished)
         {
             CAN2_Manage_Object.Callback_Function(&CAN2_Manage_Object.Rx_Buffer);
         }

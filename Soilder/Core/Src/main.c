@@ -1,27 +1,26 @@
 /* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
-  * @file           : main.c
-  * @brief          : Main program body
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2026 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * @file           : main.c
+ * @brief          : Main program body
+ ******************************************************************************
+ * @attention
+ *
+ * Copyright (c) 2026 STMicroelectronics.
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ * If no LICENSE file comes with this software, it is provided AS-IS.
+ *
+ ******************************************************************************
+ */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "can.h"
 #include "crc.h"
 #include "dma.h"
-#include "iwdg.h"
 #include "tim.h"
 #include "usart.h"
 #include "usb_device.h"
@@ -52,46 +51,56 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-	__asm(".global __use_no_semihosting\n\t");
+__asm(".global __use_no_semihosting\n\t");
 
-	static uint8_t putchar_buff[128];
-	static uint16_t putchar_length = 0;
-	static uint32_t putchar_startTime;
+static uint8_t putchar_buff[128];
+static uint16_t putchar_length = 0;
+static uint32_t putchar_startTime;
 
-	void stdout_putchar(char ch){
-				
-		if (putchar_length == 0) {
-			putchar_startTime = HAL_GetTick();
-		}
-		
-		putchar_buff[putchar_length] = ch;
-		
-		putchar_length++;
+void stdout_putchar(char ch)
+{
 
-		// �����������չ�128�ֽ�
-		if (putchar_length >= 128) {
-			// ����ֱ��Ӳ������
-			while (CDC_Transmit_FS(putchar_buff, putchar_length) == USBD_BUSY);
-			// ����һ��Ҫ���㳤�ȣ��´ν���ʱ�����´��� startTime ����
-			putchar_length = 0;
-		}
-	}
-	
-	inline void check_putchar(){
-		if(putchar_length != 0  && (HAL_GetTick() - putchar_startTime >= 10)){
-			if(CDC_Transmit_FS(putchar_buff, putchar_length) != USBD_BUSY)
-				putchar_length = 0;
-		}
-	}
+  if (putchar_length == 0)
+  {
+    putchar_startTime = HAL_GetTick();
+  }
 
-	void ttywrch(int ch) {
-		uint8_t data = (uint8_t)ch; // ��ʽת����ȷ��ֻȡ��8λ
-		while (CDC_Transmit_FS(&data, 1) == USBD_BUSY);
-	}
-	
-    void _sys_exit(int x) { while (1); }
-	
-	
+  putchar_buff[putchar_length] = ch;
+
+  putchar_length++;
+
+  // �����������չ�128�ֽ�
+  if (putchar_length >= 128)
+  {
+    // ����ֱ��Ӳ������
+    while (CDC_Transmit_FS(putchar_buff, putchar_length) == USBD_BUSY)
+      ;
+    // ����һ��Ҫ���㳤�ȣ��´ν���ʱ�����´��� startTime ����
+    putchar_length = 0;
+  }
+}
+
+void check_putchar()
+{
+  if (putchar_length != 0 && (HAL_GetTick() - putchar_startTime >= 10))
+  {
+    if (CDC_Transmit_FS(putchar_buff, putchar_length) != USBD_BUSY)
+      putchar_length = 0;
+  }
+}
+
+void ttywrch(int ch)
+{
+  uint8_t data = (uint8_t)ch; // ��ʽת����ȷ��ֻȡ��8λ
+  while (CDC_Transmit_FS(&data, 1) == USBD_BUSY);
+}
+
+void _sys_exit(int x)
+{
+  while (1)
+    ;
+}
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -159,7 +168,6 @@ int main(void)
   MX_USART3_UART_Init();
   MX_USART6_UART_Init();
   MX_USB_DEVICE_Init();
-  MX_IWDG_Init();
   /* USER CODE BEGIN 2 */
   Task_Init();
   /* USER CODE END 2 */
@@ -168,9 +176,10 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	 Task_Loop();
+    Task_Loop();
+    check_putchar();
     /* USER CODE END WHILE */
-	
+
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -193,9 +202,8 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI|RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 6;

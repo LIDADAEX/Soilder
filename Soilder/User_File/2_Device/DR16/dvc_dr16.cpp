@@ -64,9 +64,14 @@ void Class_DR16::Init(UART_HandleTypeDef *huart)
 void Class_DR16::UART_RxCpltCallback(uint8_t *Rx_Data, uint16_t Length)
 {
     // 滑动窗口, 判断遥控器DR16是否在线
-    Flag += 1;
 
-    Data_Process(Length);
+    if (Length == 18) // 确保长度正确
+    {
+        Flag += 1;
+        // 立即拷贝出一份安全数据，避免 DMA 正在写入时读取
+        // 假设你在类里定义了一个 uint8_t Safe_Buffer[18];
+        Data_Process(Length);
+    }
 }
 
 /**
@@ -97,8 +102,11 @@ void Class_DR16::TIM_100ms_Alive_PeriodElapsedCallback()
  */
 void Class_DR16::TIM_1ms_Calculate_PeriodElapsedCallback()
 {
+    uint8_t Safe_Buffer[18];
+    memcpy(Safe_Buffer, UART_Manage_Object->Rx_Buffer, 18); 
+
     // 数据处理过程
-    Struct_DR16_UART_Data *tmp_buffer = (Struct_DR16_UART_Data *) UART_Manage_Object->Rx_Buffer;
+    Struct_DR16_UART_Data *tmp_buffer = (Struct_DR16_UART_Data *) Safe_Buffer;
 
     // 判断拨码触发
     _Judge_Switch(&Data.Left_Switch, tmp_buffer->Switch_1, Pre_UART_Rx_Data.Switch_1);
@@ -125,7 +133,11 @@ void Class_DR16::TIM_1ms_Calculate_PeriodElapsedCallback()
 void Class_DR16::Data_Process(uint16_t Length)
 {
     // 数据处理过程
-    Struct_DR16_UART_Data *tmp_buffer = (Struct_DR16_UART_Data *) UART_Manage_Object->Rx_Buffer;
+
+    uint8_t Safe_Buffer[18];
+    memcpy(Safe_Buffer, UART_Manage_Object->Rx_Buffer, Length); 
+
+    Struct_DR16_UART_Data *tmp_buffer = (Struct_DR16_UART_Data *) Safe_Buffer;
 
     // 摇杆信息
     Data.Right_X = (tmp_buffer->Channel_0 - Rocker_Offset) / Rocker_Num;

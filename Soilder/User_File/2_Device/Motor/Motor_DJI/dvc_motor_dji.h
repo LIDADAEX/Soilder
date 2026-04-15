@@ -475,6 +475,8 @@ public:
 
     inline Struct_Motor_DJI_Rx_Data& Get_Rx_Data();
 
+    inline float Get_Gearbox_Rate();
+
     inline void Set_Control_Method(Enum_Motor_DJI_Control_Method __Motor_DJI_Control_Method);
 
     inline void Set_Target_Angle(float __Target_Angle);
@@ -496,6 +498,9 @@ public:
     void TIM_Calculate_PeriodElapsedCallback();
 
     void TIM_Power_Limit_After_Calculate_PeriodElapsedCallback();
+
+    // 一圈编码器刻度
+    static const uint16_t Encoder_Num_Per_Round = 8192;
 
 protected:
     // 初始化相关变量
@@ -520,9 +525,6 @@ protected:
     float Power_K_1 = 0.00004319062337601348f;
     float Power_K_2 = 0.12785662198126574f;
     float Power_A = 1.598658371452403f;
-
-    // 一圈编码器刻度
-    uint16_t Encoder_Num_Per_Round = 8192;
 
     // 电流到输出的转化系数
     float Current_To_Out = 16384.0f / 20.0f;
@@ -1293,6 +1295,10 @@ inline float Class_Motor_DJI_C620::Get_Feedforward_Current()
 
 inline Struct_Motor_DJI_Rx_Data& Class_Motor_DJI_C620::Get_Rx_Data(){
     return Rx_Data;
+}
+
+inline float Class_Motor_DJI_C620::Get_Gearbox_Rate(){
+    return Gearbox_Rate;
 }
 
 /**
