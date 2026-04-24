@@ -333,7 +333,7 @@ inline void handle_chassis_get(const std::string subSrcList[], uint8_t count) {
                    chassis.m_worldPosition.getAngle() * 57.3f);
             break;
         case EnumCmdChassisStateList::target_v:
-            printf("目标速: VX:%.2f, VY:%.2f, VW:%.2f\r\n",
+            printf("目标速度: VX:%.2f, VY:%.2f, VW:%.2f\r\n",
                    chassis.Get_Target_VX(),
                    chassis.Get_Target_VY(),
                    chassis.Get_Target_VW());
@@ -356,6 +356,10 @@ inline void handle_chassis_get(const std::string subSrcList[], uint8_t count) {
             int32_t ticks[4];
             chassis.m_worldPosition.getRawTicks(ticks);
             printf("原始脉冲 -> XP:%d, XM:%d, YP:%d, YM:%d\r\n", ticks[0], ticks[1], ticks[2], ticks[3]);
+            break;
+        }
+        case EnumCmdChassisStateList::IMU_Paw:{
+            printf("陀螺仪角度：%.2f\r\n",chassis.Get_IMU_Paw());
             break;
         }
         // 默认处理：如果指令不在枚举列表中，统一报错并打印可用列表
@@ -416,6 +420,7 @@ inline void handle_chassis_put(const std::string subSrcList[], uint8_t count) {
         case EnumCmdChassisStateList::correction:
         case EnumCmdChassisStateList::raw_ticks:
         case EnumCmdChassisStateList::now_angle:
+        case EnumCmdChassisStateList::IMU_Paw:
             printf("错误: [%s] 为只读项，不可修改。\r\n", subSrcList[2].c_str());
             break;
         // 默认处理：未知参数项

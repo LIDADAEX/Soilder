@@ -4,7 +4,13 @@
 #include "1_Middleware/1_Driver/CAN/drv_can.h"
 #include "1_Middleware/3_Debug/debug_log.h"
 #include "2_Device/Motor/Motor_DJI/dvc_motor_dji.h"
+#include "2_Device/IMU/dm_imu.h"
 #include "arm_math.h"  // 引入 ARM DSP 库
+
+extern Class_Motor_DJI_C620 motor_x_p;
+extern Class_Motor_DJI_C620 motor_x_m;
+extern Class_Motor_DJI_C620 motor_y_p;
+extern Class_Motor_DJI_C620 motor_y_m;
 
 class WorldPosition {
    public:
@@ -52,6 +58,7 @@ class Chassis {
     inline bool Get_World_Frame_Status() const { return m_is_world_frame; }
     inline float32_t Get_Delay_Comp_Ms() const { return m_delay_comp_ms; }
     inline float32_t Get_Deadzone() const { return m_deadzone; }
+    inline float32_t Get_IMU_Paw() const {return m_IMU.Data.yaw; }
 
     // --- 控制目标设置 (Setters) ---
     inline void Set_Target_VX(float32_t v_x) { m_target_vx = v_x; }
@@ -92,6 +99,8 @@ class Chassis {
 
     // 定位实例暴露给外部
     WorldPosition m_worldPosition;
+
+    Class_IMU m_IMU;
 
    private:
     // 内部电机指针关联数组 (0:X+, 1:X-, 2:Y+, 3:Y-)

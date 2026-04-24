@@ -1,5 +1,10 @@
 #include "crt_chassis.h"
 
+Class_Motor_DJI_C620 motor_x_p;
+Class_Motor_DJI_C620 motor_x_m;
+Class_Motor_DJI_C620 motor_y_p;
+Class_Motor_DJI_C620 motor_y_m;
+
 /* ================== 1. WorldPosition 实现 ================== */
 
 void WorldPosition::init(const int32_t* x_p, const int32_t* x_m, const int32_t* y_p, const int32_t* y_m, Config cfg) {
@@ -117,31 +122,36 @@ void Chassis::chassis_init(Class_Motor_DJI_C620& x_p,
     m_gear_ratio = cfg.ratio;
     // 物理量转换系数：V -> Omega
     m_vel_to_omega_coeff = 1.0f / m_radius;
+
+    m_IMU.Init(&hcan2, 0x05, 0.2f, 0.4f);
+    HAL_Delay(1);
+    m_IMU.Set_Active_Mode(false);
+
 }
 
 void Chassis::TIM_1ms_Calculate_PeriodElapsedCallback() {
-    // 1. 检查电机在线状态
-    bool all_motors_healthy = true;
+    // // 1. 检查电机在线状态
+    // bool all_motors_healthy = true;
 
-    // 1. 电机状态检查与 PID 计算
-    for (uint8_t i = 0; i < 4; i++) {
-        if (m_motors[i]->Get_Status() != Motor_DJI_Status_ENABLE) {
-            all_motors_healthy = false;
-            break;
-        }
-    }
+    // // 1. 电机状态检查与 PID 计算
+    // for (uint8_t i = 0; i < 4; i++) {
+    //     if (m_motors[i]->Get_Status() != Motor_DJI_Status_ENABLE) {
+    //         all_motors_healthy = false;
+    //         break;
+    //     }
+    // }
 
-    // 安全策略：电机不全则重置原点并停止
+    // // 安全策略：电机不全则重置原点并停止
 
-    if (!all_motors_healthy) {
-        m_worldPosition.reset_origin();
-        for (uint8_t i = 0; i < 4; i++) {
-            m_motors[i]->Set_Target_Omega(0);
-            m_motors[i]->TIM_Calculate_PeriodElapsedCallback();
-            m_motors[i]->TIM_Power_Limit_After_Calculate_PeriodElapsedCallback();
-        }
-        return;
-    }
+    // if (!all_motors_healthy) {
+    //     m_worldPosition.reset_origin();
+    //     for (uint8_t i = 0; i < 4; i++) {
+    //         m_motors[i]->Set_Target_Omega(0);
+    //         m_motors[i]->TIM_Calculate_PeriodElapsedCallback();
+    //         m_motors[i]->TIM_Power_Limit_After_Calculate_PeriodElapsedCallback();
+    //     }
+    //     return;
+    // }
 
     // 2. 使用 arm_abs_f32 处理死区
     float32_t abs_vx, abs_vy, abs_vw;
@@ -154,19 +164,23 @@ void Chassis::TIM_1ms_Calculate_PeriodElapsedCallback() {
     float32_t in_vw = (abs_vw < m_deadzone) ? 0.0f : m_target_vw;
 
     if (in_vx == 0.0f && in_vy == 0.0f && in_vw == 0.0f) {
-        for (int i = 0; i < 4; i++) m_motors[i]->Set_Target_Omega(0);
+        for (int i = 0; i < 4; i++){ 
+			m_motors[i]->Set_Target_Omega(0);
+			m_motors[i]->TIM_Calculate_PeriodElapsedCallback();
+		}
         return;
     }
 
-    // 3. 更新航位推算
-    m_worldPosition.update();
+    // // 3. 更新航位推算
+    // m_worldPosition.update();
 
     float32_t exec_vx = in_vx;
     float32_t exec_vy = in_vy;
 
-    // 4. 世界坐标系变换 (DSP 加速)
+    // 4. 世界坐标系变换
     if (m_is_world_frame) {
-        float32_t angle_now = m_worldPosition.getAngle();
+        // float32_t angle_now = m_worldPosition.getAngle();
+        float32_t angle_now = m_IMU.Data.yaw /360 * 2 * PI;
         float32_t avg_omega = (m_motors[0]->Get_Now_Omega() + m_motors[1]->Get_Now_Omega() +
                                m_motors[2]->Get_Now_Omega() + m_motors[3]->Get_Now_Omega()) *
                               0.25f;
@@ -201,5 +215,30 @@ void Chassis::TIM_1ms_Calculate_PeriodElapsedCallback() {
     for (int i = 0; i < 4; i++) {
         m_motors[i]->Set_Target_Omega(motor_v[i] * scale * m_vel_to_omega_coeff);
         m_motors[i]->TIM_Calculate_PeriodElapsedCallback();
+    }
+}
+
+void Chassis::TIM_100ms_Alive_PeriodElapsedCallback() {
+    static bool initialed = false;
+    static uint8_t cnt[4] = {0};
+
+    for (uint8_t i = 0; i < 4; i++) {
+        if (cnt[i] >= 10)
+            continue;
+
+        m_motors[i]->TIM_100ms_Alive_PeriodElapsedCallback();
+
+        if (m_motors[i]->Get_Status() != Motor_DJI_Status_ENABLE) {
+            if (!initialed)
+                return;
+
+            cnt[i]++;
+            LOG_WARNING("电机" + std::to_string(i) + "掉线，重连中: " + std::to_string(cnt[i]));
+            if (cnt[i] >= 10)
+                LOG_ERROR("电机" + std::to_string(i) + "彻底丢失");
+        } else {
+            initialed = true;
+            cnt[i] = 0;  // 恢复在线，重置计数
+        }
     }
 }

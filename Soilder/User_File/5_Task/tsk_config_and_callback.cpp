@@ -57,10 +57,6 @@
 bool init_finished = false;
 uint32_t flag = 0;
 
-Class_Motor_DJI_C620 motor_x_p;
-Class_Motor_DJI_C620 motor_x_m;
-Class_Motor_DJI_C620 motor_y_p;
-Class_Motor_DJI_C620 motor_y_m;
 Chassis chassis;
 
 Class_DR16 dr16;
@@ -90,12 +86,26 @@ void Device_CAN1_Callback(Struct_CAN_Rx_Buffer* CAN_RxMessage) {
     }
 }
 
-void DR16_UART3_Callback(uint8_t* Rx_Data, uint16_t Length) {
-    dr16.UART_RxCpltCallback(Rx_Data, Length);
-    chassis.Set_Control_Target(dr16.Get_Left_X(), dr16.Get_Left_Y(), dr16.Get_Yaw(), false);
+// bool flag_check = false;
+// static uint32_t lastTime = HAL_GetTick();
+// static uint32_t nowTime;
+void Device_CAN2_Callback(Struct_CAN_Rx_Buffer* CAN_RxMessage) {
+    
+    // nowTime = HAL_GetTick();
+    switch (CAN_RxMessage->Header.StdId) {
+        case (0x55): {
+            chassis.m_IMU.CAN_RxCpltCallback(CAN_RxMessage->Data);
+        } break;
+    }
+    // flag_check = true;
 }
 
-bool test_motor = false;
+void DR16_UART3_Callback(uint8_t* Rx_Data, uint16_t Length) {
+    dr16.UART_RxCpltCallback(Rx_Data, Length);
+    chassis.Set_Control_Target(dr16.Get_Left_X(), dr16.Get_Left_Y(), dr16.Get_Yaw(), true);
+}
+
+// bool test_motor = false;
 
 void HAL_SYSTICK_Callback(void) {
     flag_1ms = true;
@@ -119,6 +129,8 @@ void TIM_100ms_PeriodElapsedCallback() {
  */
 void Task_Init() {
     CAN_Init(&hcan1, Device_CAN1_Callback);
+    CAN_Init(&hcan2, Device_CAN2_Callback);
+
     TIM_Init(&htim3, TIM_100ms_PeriodElapsedCallback);
 
     UART_Init(&huart3, DR16_UART3_Callback, 18);
@@ -126,13 +138,13 @@ void Task_Init() {
     LOG_INFO("遥控器初始化完成");
 
     motor_x_p.Init(&hcan1, Motor_DJI_ID_0x201);
-    motor_x_p.PID_Omega.Init(0.5, 0, 0);
+    motor_x_p.PID_Omega.Init(2.0, 0.1, 0.01, 1.0, 100, 10, 0.001, 0.1, 0.3, -2, 2, PID_D_First_ENABLE);
     motor_x_m.Init(&hcan1, Motor_DJI_ID_0x203);
-    motor_x_m.PID_Omega.Init(0.5, 0, 0);
+    motor_x_m.PID_Omega.Init(2.0, 0.1, 0.01, 1.0, 100, 10, 0.001, 0.1, 0.3, -2, 2, PID_D_First_ENABLE);
     motor_y_p.Init(&hcan1, Motor_DJI_ID_0x202);
-    motor_y_p.PID_Omega.Init(0.5, 0, 0);
+    motor_y_p.PID_Omega.Init(2.0, 0.1, 0.01, 1.0, 100, 10, 0.001, 0.1, 0.3, -2, 2, PID_D_First_ENABLE);
     motor_y_m.Init(&hcan1, Motor_DJI_ID_0x204);
-    motor_y_m.PID_Omega.Init(0.5, 0, 0);
+    motor_y_m.PID_Omega.Init(2.0, 0.1, 0.01, 1.0, 100, 10, 0.001, 0.1, 0.3, -2, 2, PID_D_First_ENABLE);
     LOG_INFO("底盘电机初始化完成");
 
     chassis.chassis_init(motor_x_p, motor_x_m, motor_y_p, motor_y_m);
@@ -158,18 +170,18 @@ void Task_Loop() {
     // }
 
     // if(readFlag(flag_check)){
-    //     LOG_WARNING("检查！" + std::to_string(nowTime - lastTime));
+    //     LOG_WARNING("检查！" + std::to_string(nowTime - lastTime) + "ms");
     //     lastTime = nowTime;
     // }
 
     if (readFlag(flag_1ms)) {
-        TIM_1ms_CAN_PeriodElapsedCallback();
-
-        if (dr16.Get_Status() == DR16_Status_ENABLE) {
-            chassis.TIM_1ms_Calculate_PeriodElapsedCallback();
+        if (dr16.Get_Status() != DR16_Status_ENABLE) {
+            chassis.Set_Control_Target(0, 0, 0, true);
         }
+        chassis.TIM_1ms_Calculate_PeriodElapsedCallback();
+        chassis.m_IMU.TIM_1ms_Calculate_PeriodElapsedCallback();
 
-        CAN_Send_Data(&hcan1, 0x200, CAN1_0x200_Tx_Data, 8);
+        TIM_1ms_CAN_PeriodElapsedCallback();
     }
 }
 

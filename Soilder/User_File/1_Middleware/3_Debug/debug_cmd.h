@@ -100,7 +100,8 @@ enum class EnumCmdChassisStateList : uint8_t {
     delay_comp,   // 相位延迟补偿时间 (ms)
     deadzone,     // 控制死区
     correction,   // 获取打滑修正值 (X, Y)
-    raw_ticks     // 获取四路电机原始脉冲
+    raw_ticks,     // 获取四路电机原始脉冲
+    IMU_Paw
 };
 
 enum class EnumCmdRemoteStateList : uint8_t {
@@ -142,7 +143,7 @@ static const char* PIDParamStrings[] =
     {"p", "i", "d", "f", "i_limit", "out_limit", "dead_zone", "speed_a", "speed_b", "separate"};
 static const char* chassisStrings[] = {"get", "put"};
 static const char* chassisStateStrings[] =
-    {"now_angle", "target_v", "world_frame", "delay_comp", "deadzone", "correction", "raw_ticks"};
+    {"now_angle", "target_v", "world_frame", "delay_comp", "deadzone", "correction", "raw_ticks", "IMU_Paw"};
 
 static const char* remoteStrings[] = {"get"};
 static const char* remoteStateStrings[] = {"stick"};
