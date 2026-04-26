@@ -129,7 +129,6 @@ int main(void)
   while (1)
   {
     Task_Loop();
-    check_putchar();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

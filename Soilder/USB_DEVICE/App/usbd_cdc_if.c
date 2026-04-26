@@ -261,11 +261,6 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
 static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 {
   /* USER CODE BEGIN 6 */
-  extern void Debug_FIFO_Push(uint8_t data);
-
-  for (uint32_t i = 0; i < *Len; i++) {
-      Debug_FIFO_Push(Buf[i]);
-  }
 
   USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
   USBD_CDC_ReceivePacket(&hUsbDeviceFS);
@@ -286,7 +281,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
   */
 uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len)
 {
-uint8_t result = USBD_OK;
+  uint8_t result = USBD_OK;
   /* USER CODE BEGIN 7 */
   
   // 如果 USB 没连接或没配置好，直接返回错误，避免进入后续逻辑

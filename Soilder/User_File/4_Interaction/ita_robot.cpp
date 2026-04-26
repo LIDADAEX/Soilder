@@ -21,6 +21,8 @@ void HAL_SYSTICK_Callback(void) {
 
 void Robot::init(){
 
+    UART_Init(&huart6, Debug_USART6_Callback, 512);
+
     CAN_Init(&hcan1, Device_CAN1_Callback);
     CAN_Init(&hcan2, Device_CAN2_Callback);
 
@@ -90,6 +92,14 @@ void Robot::Device_CAN2_Callback(Struct_CAN_Rx_Buffer* CAN_RxMessage) {
         case (0x55): {
             chassis.m_IMU.CAN_RxCpltCallback(CAN_RxMessage->Data);
         } break;
+    }
+}
+
+extern void Debug_FIFO_Push(uint8_t data);
+
+void Robot::Debug_USART6_Callback(uint8_t* Rx_Data, uint16_t Length){
+    for (uint32_t i = 0; i < Length; i++) {
+        Debug_FIFO_Push(Rx_Data[i]);
     }
 }
 
