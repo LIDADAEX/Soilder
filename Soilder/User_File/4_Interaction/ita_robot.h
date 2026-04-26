@@ -8,12 +8,14 @@
 #include "2_Device/DR16/dvc_dr16.h"
 #include "2_Device/Motor/Motor_DJI/dvc_motor_dji.h"
 #include "3_Chariot/1_Module/Chassis/crt_chassis.h"
+#include "2_Device/Referee/dvc_referee.h"
 
 class Robot{
 
 public:
     static Chassis chassis;
     static Class_DR16 dr16;
+    static Class_Referee referee;
 
     static void init();
     static void loop();
@@ -25,6 +27,7 @@ private:
     static void Device_CAN1_Callback(Struct_CAN_Rx_Buffer* CAN_RxMessage);
     static void Device_CAN2_Callback(Struct_CAN_Rx_Buffer* CAN_RxMessage);
     static void DR16_UART3_Callback(uint8_t* Rx_Data, uint16_t Length);
+    static void Referee_USART4_Callback(uint8_t* Rx_Data, uint16_t Length);
 
 };
 

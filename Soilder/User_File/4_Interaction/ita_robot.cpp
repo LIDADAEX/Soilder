@@ -2,6 +2,7 @@
 
 Chassis Robot::chassis;
 Class_DR16 Robot::dr16;
+Class_Referee Robot::referee;
 
 bool flag_1ms = false;
 
@@ -41,6 +42,10 @@ void Robot::init(){
 
     chassis.chassis_init(motor_x_p, motor_x_m, motor_y_p, motor_y_m);
     LOG_INFO("底盘初始化完成");
+
+    UART_Init(&huart4, Referee_USART4_Callback, 512);
+    referee.Init(&huart4);
+    LOG_INFO("裁判系统初始化完成");
 
     HAL_TIM_Base_Start_IT(&htim3);
 
@@ -86,6 +91,11 @@ void Robot::Device_CAN2_Callback(Struct_CAN_Rx_Buffer* CAN_RxMessage) {
             chassis.m_IMU.CAN_RxCpltCallback(CAN_RxMessage->Data);
         } break;
     }
+}
+
+void Robot::Referee_USART4_Callback(uint8_t* Rx_Data, uint16_t Length) {
+    if(!init_finished) return;
+    referee.UART_RxCpltCallback(Rx_Data, Length);
 }
 
 void Robot::DR16_UART3_Callback(uint8_t* Rx_Data, uint16_t Length) {

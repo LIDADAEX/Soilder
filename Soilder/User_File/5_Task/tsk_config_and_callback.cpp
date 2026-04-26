@@ -54,9 +54,7 @@ bool init_finished = false;
  */
 void Task_Init() {
     Robot::init();
-
     init_finished = true;
-
 }
 
 /**

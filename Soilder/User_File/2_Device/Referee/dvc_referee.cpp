@@ -1,12 +1,5 @@
 #include "dvc_referee.h"
 #include <string.h>
-// [CN] 静态指针，用于回调函数中访问具体的类实例
-static Class_Referee* Global_Referee_Instance = nullptr;
-
-// [CN] 驱动层所需的回调函数桥接
-static void Referee_Bridge_Callback(uint8_t* buf, uint16_t len) {
-    if (Global_Referee_Instance) Global_Referee_Instance->UART_RxCpltCallback(buf, len);
-}
 
 // --- 官方 CRC8 查找表 ---
 static const uint8_t CRC8_TAB[256] = {
@@ -51,9 +44,7 @@ static const uint16_t CRC16_TAB[256] = {
 // --- 类实现 ---
 
 void Class_Referee::Init(UART_HandleTypeDef *huart) {
-    Global_Referee_Instance = this;
     this->huart = huart;
-    UART_Init(huart, Referee_Bridge_Callback, 512);
 
     if (huart->Instance == USART1) {
         UART_Obj = &UART1_Manage_Object;

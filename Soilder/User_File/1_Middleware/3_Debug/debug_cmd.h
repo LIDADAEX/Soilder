@@ -23,6 +23,7 @@ static Class_Motor_DJI_C620& cmd_motor_y_p = motor_y_p;
 static Class_Motor_DJI_C620& cmd_motor_y_m = motor_y_m;
 static Chassis& cmd_chassis = Robot::chassis;
 static Class_DR16& cmd_DR16 = Robot::dr16;
+static Class_Referee& cmd_referee = Robot::referee;
 
 /**
  * @brief 电机实例指针数组，将 ID 与具体对象绑定
@@ -44,10 +45,11 @@ static Class_Motor_DJI_C620* motor_list[] = {&cmd_motor_x_p, &cmd_motor_x_m, &cm
 /** @brief 顶级根指令枚举 */
 enum class EnumCmdList : uint8_t {
     error = 0,
-    motor,    // 电机调试
-    chassis,  // 底盘调试
+    motor,
+    chassis,
     remote,
-    help  // 帮助菜单
+    referee,  // 新增：裁判系统
+    help
 };
 
 /** @brief 电机子指令枚举 */
@@ -117,6 +119,38 @@ enum class EnumCmdRemoteList : uint8_t {
     get,
 };
 
+/* --- 新增裁判系统子指令枚举 --- */
+enum class EnumCmdRefereeList : uint8_t { error = 0, get };
+
+/** @brief 裁判系统数据项枚举 */
+enum class EnumCmdRefereeStateList : uint8_t {
+    error = 0,
+    Game_Status,
+    Game_Result,
+    Robot_HP,
+    Event_Data,
+    Referee_Warning,
+    Robot_Status,
+    Power_Heat,
+    Robot_Pos,
+    Robot_Buff,
+    Aerial_Status,
+    Hurt_Data,
+    Shoot_Data,
+    Ammo_Remain,
+    RFID_Status,
+    Dart_Command,
+    Sentry_Location,
+    Radar_Mark,
+    Sentry_Decision,
+    Radar_Decision,
+    Dart_Status,
+    Custom_Controller,
+    Client_Minimap,
+    Client_Remote,
+    Client_Radar
+};
+
 /* ========================================================================= */
 /* =                          2. 指令类定义与映射                          = */
 /* ========================================================================= */
@@ -132,7 +166,7 @@ class CmdClass {
 
 /* --- 静态字符串数组 (词库) --- */
 
-static const char* topStrings[] = {"motor", "chassis", "remote", "help"};
+static const char* topStrings[] = {"motor", "chassis", "remote", "referee", "help"};
 static const char* motorStrings[] = {"get", "put"};
 static const char* motorStateStrings[] = {"target_angle",
                                           "target_omega",
@@ -151,6 +185,15 @@ static const char* chassisStateStrings[] =
 static const char* remoteStrings[] = {"get"};
 static const char* remoteStateStrings[] = {"stick"};
 
+static const char* refereeStrings[] = {"get"};
+static const char* refereeStateStrings[] = {
+    "Game_Status", "Game_Result", "Robot_HP", "Event_Data", "Referee_Warning",
+    "Robot_Status", "Power_Heat", "Robot_Pos", "Robot_Buff", "Aerial_Status",
+    "Hurt_Data", "Shoot_Data", "Ammo_Remain", "RFID_Status", "Dart_Command",
+    "Sentry_Location", "Radar_Mark", "Sentry_Decision", "Radar_Decision", "Dart_Status",
+    "Custom_Controller", "Client_Minimap", "Client_Remote", "Client_Radar"
+};
+
 /* --- 实例化指令对象 (供解析器查询) --- */
 
 static const CmdClass CmdTopList = {topStrings, CMD_COUNT(topStrings)};
@@ -162,7 +205,8 @@ static const CmdClass CmdChassisList = {chassisStrings, CMD_COUNT(chassisStrings
 static const CmdClass CmdChassisStateList = {chassisStateStrings, CMD_COUNT(chassisStateStrings)};
 static const CmdClass CmdRemoteList = {remoteStrings, CMD_COUNT(remoteStrings)};
 static const CmdClass CmdRemoteStateList = {remoteStateStrings, CMD_COUNT(remoteStateStrings)};
-
+static const CmdClass CmdRefereeList = {refereeStrings, CMD_COUNT(refereeStrings)};
+static const CmdClass CmdRefereeStateList = {refereeStateStrings, CMD_COUNT(refereeStateStrings)};
 /* ========================================================================= */
 /* =                          3. 外部接口声明                              = */
 /* ========================================================================= */

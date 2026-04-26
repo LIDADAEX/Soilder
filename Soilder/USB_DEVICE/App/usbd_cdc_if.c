@@ -286,14 +286,25 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
   */
 uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len)
 {
-  uint8_t result = USBD_OK;
+uint8_t result = USBD_OK;
   /* USER CODE BEGIN 7 */
+  
+  // 如果 USB 没连接或没配置好，直接返回错误，避免进入后续逻辑
+  if (hUsbDeviceFS.dev_state != USBD_STATE_CONFIGURED)
+  {
+      return USBD_FAIL;
+  }
+
   USBD_CDC_HandleTypeDef *hcdc = (USBD_CDC_HandleTypeDef*)hUsbDeviceFS.pClassData;
+  
+  // 2. 检查上一次发送是否完成
   if (hcdc->TxState != 0){
     return USBD_BUSY;
   }
+
   USBD_CDC_SetTxBuffer(&hUsbDeviceFS, Buf, Len);
   result = USBD_CDC_TransmitPacket(&hUsbDeviceFS);
+  
   /* USER CODE END 7 */
   return result;
 }

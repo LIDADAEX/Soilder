@@ -498,6 +498,124 @@ inline void handle_remote_cmd(const std::string subSrcList[], uint8_t count) {
     }
 }
 
+/** @brief 底盘指令二级分发 */
+inline void handle_referee_get(const std::string subSrcList[], uint8_t count) {
+    if (count < 3) {
+        errorHandle("referee get", &CmdRefereeStateList);
+        return;
+    }
+
+    auto stateIdx = static_cast<EnumCmdRefereeStateList>(findCmd(subSrcList[2], &CmdRefereeStateList));
+
+    switch (stateIdx) {
+        case EnumCmdRefereeStateList::Game_Status:
+            printf("[Game Status] Type:%d, Stage:%d, Time:%ds, Timestamp:%llu\r\n",
+                   cmd_referee.Game_Status.Type_Enum, cmd_referee.Game_Status.Stage_Enum,
+                   cmd_referee.Game_Status.Remaining_Time, cmd_referee.Game_Status.Timestamp);
+            break;
+
+        case EnumCmdRefereeStateList::Game_Result:
+            printf("[Game Result] Winner ID (0-Draw, 1-Red, 2-Blue): %d\r\n", cmd_referee.Game_Result.Result);
+            break;
+
+        case EnumCmdRefereeStateList::Robot_HP:
+            printf("[Robot HP] RED: H:%d, E:%d, I3:%d, I4:%d, I5:%d, S:%d, B:%d\r\n",
+                   cmd_referee.Robot_HP.Red_Hero_1, cmd_referee.Robot_HP.Red_Engineer_2,
+                   cmd_referee.Robot_HP.Red_Infantry_3, cmd_referee.Robot_HP.Red_Infantry_4,
+                   cmd_referee.Robot_HP.Red_Infantry_5, cmd_referee.Robot_HP.Red_Sentry_7,
+                   cmd_referee.Robot_HP.Red_Base_10);
+            printf("           BLUE: H:%d, E:%d, I3:%d, I4:%d, I5:%d, S:%d, B:%d\r\n",
+                   cmd_referee.Robot_HP.Blue_Hero_1, cmd_referee.Robot_HP.Blue_Engineer_2,
+                   cmd_referee.Robot_HP.Blue_Infantry_3, cmd_referee.Robot_HP.Blue_Infantry_4,
+                   cmd_referee.Robot_HP.Blue_Infantry_5, cmd_referee.Robot_HP.Blue_Sentry_7,
+                   cmd_referee.Robot_HP.Blue_Base_10);
+            break;
+
+        case EnumCmdRefereeStateList::Event_Data:
+            printf("[Event] Supply:%d/%d, PowerRune:%d, Highland:%d, DartTime:%d\r\n",
+                   cmd_referee.Event_Data.Supply_Front_Status_Enum, cmd_referee.Event_Data.Supply_Inner_Status_Enum,
+                   cmd_referee.Event_Data.Power_Rune_Status_Enum, cmd_referee.Event_Data.Highland_Center_Status_Enum,
+                   cmd_referee.Event_Data.Enemy_Dart_Hit_Time);
+            break;
+
+        case EnumCmdRefereeStateList::Power_Heat:
+            printf("[Power/Heat] V:%.2fV, I:%.2fA, P:%.2fW, Buff:%dJ\r\n",
+                   cmd_referee.Power_Heat.Chassis_Voltage / 1000.0f, cmd_referee.Power_Heat.Chassis_Current / 1000.0f,
+                   cmd_referee.Power_Heat.Chassis_Power, cmd_referee.Power_Heat.Chassis_Energy_Buffer);
+            printf("             Heat: 17mm_1:%d, 17mm_2:%d, 42mm:%d\r\n",
+                   cmd_referee.Power_Heat.Booster_17mm_1_Heat, cmd_referee.Power_Heat.Booster_17mm_2_Heat,
+                   cmd_referee.Power_Heat.Booster_42mm_Heat);
+            break;
+
+        case EnumCmdRefereeStateList::Robot_Pos:
+            printf("[Position] X:%.3f, Y:%.3f, Yaw:%.3f\r\n",
+                   cmd_referee.Robot_Pos.Location_X, cmd_referee.Robot_Pos.Location_Y,
+                   cmd_referee.Robot_Pos.Location_Yaw);
+            break;
+
+        case EnumCmdRefereeStateList::Robot_Status:
+            printf("[Robot Status] ID:%d, Level:%d, HP:%d/%d, HeatMax:%d, PowerMax:%d\r\n",
+                   cmd_referee.Robot_Status.Robot_ID, cmd_referee.Robot_Status.Level,
+                   cmd_referee.Robot_Status.HP, cmd_referee.Robot_Status.HP_Max,
+                   cmd_referee.Robot_Status.Booster_Heat_Max, cmd_referee.Robot_Status.Chassis_Power_Max);
+            break;
+
+        case EnumCmdRefereeStateList::Shoot_Data:
+            printf("[Shoot] Type:%d, Frequency:%d, Speed:%.2f\r\n",
+                   cmd_referee.Shoot_Data.Ammo_Type, cmd_referee.Shoot_Data.Frequency,
+                   cmd_referee.Shoot_Data.Speed);
+            break;
+
+        case EnumCmdRefereeStateList::Ammo_Remain:
+            printf("[Ammo] 17mm:%d, 42mm:%d, Money:%d\r\n",
+                   cmd_referee.Ammo_Remain.Booster_17mm, cmd_referee.Ammo_Remain.Booster_42mm,
+                   cmd_referee.Ammo_Remain.Money);
+            break;
+
+        case EnumCmdRefereeStateList::Radar_Mark:
+            printf("[Radar Mark] Hero:%d, Eng:%d, Inf3:%d, Inf4:%d, Inf5:%d, Sentry:%d\r\n",
+                   cmd_referee.Radar_Mark.Opposing_Hero_1_Mark, cmd_referee.Radar_Mark.Opposing_Engineer_2_Mark,
+                   cmd_referee.Radar_Mark.Opposing_Infantry_3_Mark, cmd_referee.Radar_Mark.Opposing_Infantry_4_Mark,
+                   cmd_referee.Radar_Mark.Opposing_Infantry_5_Mark, cmd_referee.Radar_Mark.Opposing_Sentry_7_Mark);
+            break;
+
+        case EnumCmdRefereeStateList::Sentry_Decision:
+            printf("[Sentry Decision] Status:%d, AmmoExchange:%d, Posture:%d\r\n",
+                   cmd_referee.Sentry_Decision.Sentry_Off_Combat,
+                   cmd_referee.Sentry_Decision.Ammo_Remaining_Exchange_Number,
+                   cmd_referee.Sentry_Decision.Now_Posture);
+            break;
+
+        case EnumCmdRefereeStateList::Client_Radar:
+            printf("[Radar Minimap] Hero(%d,%d), Eng(%d,%d), Inf3(%d,%d), Sentry(%d,%d)\r\n",
+                   cmd_referee.Client_Receive_Radar.Hero_Position_X, cmd_referee.Client_Receive_Radar.Hero_Position_Y,
+                   cmd_referee.Client_Receive_Radar.Engineer_Position_X, cmd_referee.Client_Receive_Radar.Engineer_Position_Y,
+                   cmd_referee.Client_Receive_Radar.Infantry_3_Position_X, cmd_referee.Client_Receive_Radar.Infantry_3_Position_Y,
+                   cmd_referee.Client_Receive_Radar.Sentry_Position_X, cmd_referee.Client_Receive_Radar.Sentry_Position_Y);
+            break;
+
+        default:
+            printf("收到指令: referee get %s (暂未实现详细打印)\r\n", subSrcList[2].c_str());
+            errorHandle("referee get", &CmdRefereeStateList);
+            break;
+    }
+}
+
+/** @brief 裁判系统指令分发 */
+inline void handle_referee_cmd(const std::string subSrcList[], uint8_t count) {
+    if (count < 2) {
+        errorHandle("referee", &CmdRefereeList);
+        return;
+    }
+
+    auto subCmd = static_cast<EnumCmdRefereeList>(findCmd(subSrcList[1], &CmdRefereeList));
+    if (subCmd == EnumCmdRefereeList::get)
+        handle_referee_get(subSrcList, count);
+    else
+        errorHandle("referee", &CmdRefereeList);
+}
+
+
 /* ========================================================================= */
 /* =                         6. 主入口解析函数                             = */
 /* ========================================================================= */
@@ -530,6 +648,9 @@ void anysisCmd(const std::string src) {
             break;  // 统一的分发风格
         case EnumCmdList::help:
             Cmd_help();
+            break;
+		case EnumCmdList::referee:
+            handle_referee_cmd(subSrcList, count);
             break;
         default:
             errorHandle(nullptr, nullptr);
