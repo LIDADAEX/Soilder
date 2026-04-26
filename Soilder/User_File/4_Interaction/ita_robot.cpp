@@ -1,4 +1,5 @@
 #include "ita_robot.h"
+#include "usbd_cdc_if.h"
 
 Chassis Robot::chassis;
 Class_DR16 Robot::dr16;
@@ -17,7 +18,6 @@ bool readFlag(bool& flag) {
 void HAL_SYSTICK_Callback(void) {
     flag_1ms = true;
 }
-
 
 void Robot::init(){
 
@@ -60,12 +60,97 @@ void Robot::loop(){
     }
 }
 
+enum class GimbalMode{
+    none,
+    controlNoFire,
+    controlAndFile
+};
+
+#pragma pack(push, 1) // 强制 1 字节对齐，防止编译器乱加填充
+struct Struct_Gimbal_Send_Packet {
+    uint8_t header[2];   // 'S', 'P'
+    uint8_t mode;
+    float q[4] = {0};          // 四元数
+    float yaw = 0;
+    float yaw_vel = 0;
+    float pitch = 0;
+    float pitch_vel = 0;
+    float shootSpeed;
+    uint16_t ammo_remain; // 弹丸剩余通常是 uint16_t
+    uint16_t crc16;
+};
+
+struct Struct_navPacket {
+    uint8_t header;   
+    uint8_t Stage_Enum;
+    uint16_t Remaining_Time;
+    uint16_t Current_hp;
+    uint8_t middle_buff_status;
+    uint8_t crc16;
+    uint8_t tail;
+};
+#pragma pack(pop)
+
+static uint8_t flag = 0;
+static uint8_t past_flag = 0;
+enum class ControlState{
+    enable,
+    disable
+}controlState;
+
+
 void Robot::TIM_1ms_Calculate_PeriodElapsedCallback(){
-    if (dr16.Get_Status() != DR16_Status_ENABLE) {
+    if ((dr16.Get_Status() != DR16_Status_ENABLE) || (controlState != ControlState::enable)) {
         chassis.Set_Control_Target(0, 0, 0, true);
     }
     chassis.TIM_1ms_Calculate_PeriodElapsedCallback();
     chassis.m_IMU.TIM_1ms_Calculate_PeriodElapsedCallback();
+
+    Struct_navPacket navPacket;
+    navPacket.header = '@';
+    navPacket.Stage_Enum = Robot::referee.Game_Status.Stage_Enum;
+    navPacket.Remaining_Time = Robot::referee.Game_Status.Remaining_Time;
+    navPacket.Current_hp = Robot::referee.Robot_Status.HP;
+    navPacket.middle_buff_status = Robot::referee.Robot_Buff.Defend_Buff_Percent;
+    navPacket.tail = '#';
+
+    navPacket.crc16 = Class_Referee::Get_CRC16((uint8_t*)&navPacket, 10, 0xffff);
+
+    CDC_Transmit_FS((uint8_t*)&navPacket, 10);
+
+    static GimbalMode mode = GimbalMode::none;
+
+    Struct_Gimbal_Send_Packet packet;
+    
+    packet.header[0] = 'S';
+    packet.header[1] = 'P';
+    packet.mode = (uint8_t)mode;
+    
+    packet.shootSpeed = Robot::referee.Get_Shoot_Initial_Speed();
+    packet.ammo_remain = Robot::referee.Get_Ammo_17mm_1_Remain();
+
+    packet.crc16 = Class_Referee::Get_CRC16((uint8_t*)&packet, 10, 0xffff);
+
+    CDC_Transmit_FS((uint8_t*)&packet, 7 + 9 * sizeof(float));
+}
+
+void cmd_0x6A(uint8_t* cmd){
+    Robot::chassis.Set_Control_Target(*(float*)cmd,*(float*) (cmd + sizeof(float)), 0, true);
+}
+
+void Robot::Controlcmd_DataProcess(uint8_t* Rx_Data, uint16_t Length){
+    uint8_t startPos = 0;
+    flag ++;
+    while(startPos != Length){
+        switch(Rx_Data[startPos]){
+            case 0x6A:{
+                cmd_0x6A(Rx_Data + startPos + 1);
+                startPos += 10;
+            }
+            break;
+        }
+    }
+    
 }
 
 void Robot::Device_CAN1_Callback(Struct_CAN_Rx_Buffer* CAN_RxMessage) {
@@ -117,5 +202,13 @@ void Robot::DR16_UART3_Callback(uint8_t* Rx_Data, uint16_t Length) {
 void Robot::TIM_100ms_PeriodElapsedCallback() {
     if(!init_finished) return;
     dr16.TIM_100ms_Alive_PeriodElapsedCallback();
+
+    if(past_flag != flag){
+        past_flag = flag;
+        controlState = ControlState::enable;
+    }
+    else{
+        controlState = ControlState::disable;
+    }
 }
 

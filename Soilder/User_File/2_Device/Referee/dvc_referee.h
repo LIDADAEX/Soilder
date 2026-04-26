@@ -1140,6 +1140,10 @@ public:
     inline uint16_t Get_Radar_Minimap_Sentry_X() { return Client_Receive_Radar.Sentry_Position_X; }
     inline uint16_t Get_Radar_Minimap_Sentry_Y() { return Client_Receive_Radar.Sentry_Position_Y; }
 
+    static uint8_t Get_CRC8(uint8_t *p, uint32_t len, uint8_t init);
+    static uint16_t Get_CRC16(uint8_t *p, uint32_t len, uint16_t init);
+    static void Append_CRC8_CRC16(uint8_t *pData, uint16_t TotalLen);
+
 protected:
     UART_HandleTypeDef *huart;
     Struct_UART_Manage_Object *UART_Obj = nullptr;
@@ -1150,9 +1154,7 @@ protected:
     void Data_Process(uint8_t *pData, uint16_t Len);
 
     // CRC 函数
-    uint8_t Get_CRC8(uint8_t *p, uint32_t len, uint8_t init);
-    uint16_t Get_CRC16(uint8_t *p, uint32_t len, uint16_t init);
-    void Append_CRC8_CRC16(uint8_t *pData, uint16_t TotalLen);
+    
 };
 
 

@@ -10,6 +10,7 @@
 #include "3_Chariot/1_Module/Chassis/crt_chassis.h"
 #include "2_Device/Referee/dvc_referee.h"
 
+
 class Robot{
 
 public:
@@ -29,6 +30,8 @@ private:
     static void Debug_USART6_Callback(uint8_t* Rx_Data, uint16_t Length);
     static void DR16_UART3_Callback(uint8_t* Rx_Data, uint16_t Length);
     static void Referee_USART4_Callback(uint8_t* Rx_Data, uint16_t Length);
+
+    static void Controlcmd_DataProcess(uint8_t* Rx_Data, uint16_t Length);
 
 };
 
