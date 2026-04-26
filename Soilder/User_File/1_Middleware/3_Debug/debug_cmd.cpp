@@ -329,37 +329,37 @@ inline void handle_chassis_get(const std::string subSrcList[], uint8_t count) {
     switch (stateIdx) {
         case EnumCmdChassisStateList::now_angle:
             printf("当前角度: %.4f rad (%.2f°)\r\n",
-                   chassis.m_worldPosition.getAngle(),
-                   chassis.m_worldPosition.getAngle() * 57.3f);
+                   cmd_chassis.m_worldPosition.getAngle(),
+                   cmd_chassis.m_worldPosition.getAngle() * 57.3f);
             break;
         case EnumCmdChassisStateList::target_v:
             printf("目标速度: VX:%.2f, VY:%.2f, VW:%.2f\r\n",
-                   chassis.Get_Target_VX(),
-                   chassis.Get_Target_VY(),
-                   chassis.Get_Target_VW());
+                   cmd_chassis.Get_Target_VX(),
+                   cmd_chassis.Get_Target_VY(),
+                   cmd_chassis.Get_Target_VW());
             break;
         case EnumCmdChassisStateList::world_frame:
-            printf("坐标系模式: %s\r\n", chassis.Get_World_Frame_Status() ? "World" : "Relative");
+            printf("坐标系模式: %s\r\n", cmd_chassis.Get_World_Frame_Status() ? "World" : "Relative");
             break;
         case EnumCmdChassisStateList::delay_comp:
-            printf("相位补偿: %.2f ms\r\n", chassis.Get_Delay_Comp_Ms());
+            printf("相位补偿: %.2f ms\r\n", cmd_chassis.Get_Delay_Comp_Ms());
             break;
         case EnumCmdChassisStateList::deadzone:
-            printf("控制死区: %.4f\r\n", chassis.Get_Deadzone());
+            printf("控制死区: %.4f\r\n", cmd_chassis.Get_Deadzone());
             break;
         case EnumCmdChassisStateList::correction:
             printf("打滑修正量 -> X: %.4f m, Y: %.4f m\r\n",
-                   chassis.m_worldPosition.getXCorrection(),
-                   chassis.m_worldPosition.getYCorrection());
+                   cmd_chassis.m_worldPosition.getXCorrection(),
+                   cmd_chassis.m_worldPosition.getYCorrection());
             break;
         case EnumCmdChassisStateList::raw_ticks: {
             int32_t ticks[4];
-            chassis.m_worldPosition.getRawTicks(ticks);
+            cmd_chassis.m_worldPosition.getRawTicks(ticks);
             printf("原始脉冲 -> XP:%d, XM:%d, YP:%d, YM:%d\r\n", ticks[0], ticks[1], ticks[2], ticks[3]);
             break;
         }
         case EnumCmdChassisStateList::IMU_Paw:{
-            printf("陀螺仪角度：%.2f\r\n",chassis.Get_IMU_Paw());
+            printf("陀螺仪角度：%.2f\r\n",cmd_chassis.Get_IMU_Paw());
             break;
         }
         // 默认处理：如果指令不在枚举列表中，统一报错并打印可用列表
@@ -384,9 +384,9 @@ inline void handle_chassis_put(const std::string subSrcList[], uint8_t count) {
             float vx, vy, vw;
             if (count >= 6 && toNumber(subSrcList[3], vx) && toNumber(subSrcList[4], vy) &&
                 toNumber(subSrcList[5], vw)) {
-                chassis.Set_Target_VX(vx);
-                chassis.Set_Target_VY(vy);
-                chassis.Set_Target_VW(vw);
+                cmd_chassis.Set_Target_VX(vx);
+                cmd_chassis.Set_Target_VY(vy);
+                cmd_chassis.Set_Target_VW(vw);
                 printf("OK. 目标速度已更新\r\n");
             } else {
                 printf("错误: 目标速度格式为 <VX> <VY> <VW>\r\n");
@@ -396,7 +396,7 @@ inline void handle_chassis_put(const std::string subSrcList[], uint8_t count) {
         case EnumCmdChassisStateList::delay_comp: {
             float ms;
             if (toNumber(subSrcList[3], ms)) {
-                chassis.Set_Delay_Comp_Ms(ms);
+                cmd_chassis.Set_Delay_Comp_Ms(ms);
                 printf("OK. 相位补偿已更新: %.2f ms\r\n", ms);
             }
             break;
@@ -404,7 +404,7 @@ inline void handle_chassis_put(const std::string subSrcList[], uint8_t count) {
         case EnumCmdChassisStateList::world_frame: {
             float val;
             if (toNumber(subSrcList[3], val)) {
-                chassis.Set_World_Frame_Status(val > 0.5f);
+                cmd_chassis.Set_World_Frame_Status(val > 0.5f);
                 printf("OK. 坐标系已切换为: %s\r\n", (val > 0.5f) ? "World" : "Relative");
             }
             break;
@@ -412,7 +412,7 @@ inline void handle_chassis_put(const std::string subSrcList[], uint8_t count) {
         case EnumCmdChassisStateList::deadzone: {
             float dz;
             if (toNumber(subSrcList[3], dz)) {
-                chassis.Set_Deadzone(dz);
+                cmd_chassis.Set_Deadzone(dz);
                 printf("OK. 底盘死区已更新: %.4f\r\n", dz);
             }
             break;
@@ -457,16 +457,16 @@ inline void handle_remote_get(const std::string subSrcList[], uint8_t count) {
 
     switch (stateIdx) {
         case EnumCmdRemoteStateList::stick:
-            if (dr16.Get_Status() != DR16_Status_ENABLE) {
+            if (cmd_DR16.Get_Status() != DR16_Status_ENABLE) {
                 printf("Remote Offline!\r\n");
                 break;
             }
             printf("Stick_LX: %.3f, Stick_LY: %.3f | Stick_RX: %.3f, Stick_RY: %.3f, Yaw: %.3f\r\n",
-                   dr16.Get_Left_X(),
-                   dr16.Get_Left_Y(),
-                   dr16.Get_Right_X(),
-                   dr16.Get_Right_Y(),
-                   dr16.Get_Yaw());
+                   cmd_DR16.Get_Left_X(),
+                   cmd_DR16.Get_Left_Y(),
+                   cmd_DR16.Get_Right_X(),
+                   cmd_DR16.Get_Right_Y(),
+                   cmd_DR16.Get_Yaw());
             break;
 
         default:

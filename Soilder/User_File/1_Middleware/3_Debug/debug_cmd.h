@@ -9,22 +9,25 @@
 
 #include <string>
 
-#include "2_Device/DR16/dvc_dr16.h"
-#include "2_Device/Motor/Motor_DJI/dvc_motor_dji.h"
-#include "3_Chariot/1_Module/Chassis/crt_chassis.h"
+#include "4_Interaction/ita_robot.h"
 #include "stm32f407xx.h"
 
 extern Class_Motor_DJI_C620 motor_x_p;  // ID: 0
 extern Class_Motor_DJI_C620 motor_x_m;  // ID: 1
 extern Class_Motor_DJI_C620 motor_y_p;  // ID: 2
 extern Class_Motor_DJI_C620 motor_y_m;  // ID: 3
-extern Chassis chassis;                 // 底盘控制实例
-extern Class_DR16 dr16;
+
+static Class_Motor_DJI_C620& cmd_motor_x_p = motor_x_p;
+static Class_Motor_DJI_C620& cmd_motor_x_m = motor_x_m;
+static Class_Motor_DJI_C620& cmd_motor_y_p = motor_y_p;
+static Class_Motor_DJI_C620& cmd_motor_y_m = motor_y_m;
+static Chassis& cmd_chassis = Robot::chassis;
+static Class_DR16& cmd_DR16 = Robot::dr16;
 
 /**
  * @brief 电机实例指针数组，将 ID 与具体对象绑定
  */
-static Class_Motor_DJI_C620* motor_list[] = {&motor_x_p, &motor_x_m, &motor_y_p, &motor_y_m};
+static Class_Motor_DJI_C620* motor_list[] = {&cmd_motor_x_p, &cmd_motor_x_m, &cmd_motor_y_p, &cmd_motor_y_m};
 
 // 获取电机数量的宏
 #define MOTOR_COUNT (sizeof(motor_list) / sizeof(motor_list[0]))

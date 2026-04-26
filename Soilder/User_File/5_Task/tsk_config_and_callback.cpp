@@ -36,17 +36,9 @@
  */
 
 /* Includes ------------------------------------------------------------------*/
-
-#include "tsk_config_and_callback.h"
-
-#include "1_Middleware/1_Driver/TIM/drv_tim.h"
-#include "1_Middleware/3_Debug/debug_cmd_interface.h"
-#include "1_Middleware/3_Debug/debug_log.h"
-#include "2_Device/DR16/dvc_dr16.h"
-#include "2_Device/Motor/Motor_DJI/dvc_motor_dji.h"
-#include "3_Chariot/1_Module/Chassis/crt_chassis.h"
 #include "stm32f407xx.h"
-
+#include "tsk_config_and_callback.h"
+#include "4_Interaction/ita_robot.h"
 /* Private macros ------------------------------------------------------------*/
 
 /* Private types -------------------------------------------------------------*/
@@ -55,103 +47,16 @@
 
 // 全局初始化完成标志位
 bool init_finished = false;
-uint32_t flag = 0;
-
-Chassis chassis;
-
-Class_DR16 dr16;
-
-bool flag_1ms = false;
-
-bool readFlag(bool& flag) {
-    bool flagTemp = flag;
-    flag = false;
-    return flagTemp;
-}
-
-void Device_CAN1_Callback(Struct_CAN_Rx_Buffer* CAN_RxMessage) {
-    switch (CAN_RxMessage->Header.StdId) {
-        case (0x201): {
-            motor_x_p.CAN_RxCpltCallback(CAN_RxMessage->Data);
-        } break;
-        case (0x203): {
-            motor_x_m.CAN_RxCpltCallback(CAN_RxMessage->Data);
-        } break;
-        case (0x202): {
-            motor_y_p.CAN_RxCpltCallback(CAN_RxMessage->Data);
-        } break;
-        case (0x204): {
-            motor_y_m.CAN_RxCpltCallback(CAN_RxMessage->Data);
-        } break;
-    }
-}
-
-// bool flag_check = false;
-// static uint32_t lastTime = HAL_GetTick();
-// static uint32_t nowTime;
-void Device_CAN2_Callback(Struct_CAN_Rx_Buffer* CAN_RxMessage) {
-    
-    // nowTime = HAL_GetTick();
-    switch (CAN_RxMessage->Header.StdId) {
-        case (0x55): {
-            chassis.m_IMU.CAN_RxCpltCallback(CAN_RxMessage->Data);
-        } break;
-    }
-    // flag_check = true;
-}
-
-void DR16_UART3_Callback(uint8_t* Rx_Data, uint16_t Length) {
-    dr16.UART_RxCpltCallback(Rx_Data, Length);
-    chassis.Set_Control_Target(dr16.Get_Left_X(), dr16.Get_Left_Y(), dr16.Get_Yaw(), true);
-}
-
-// bool test_motor = false;
-
-void HAL_SYSTICK_Callback(void) {
-    flag_1ms = true;
-    // test_motor = true;
-}
-
-// bool flag_check = false;
-// static uint32_t lastTime = HAL_GetTick();
-// static uint32_t nowTime;
-
-void TIM_100ms_PeriodElapsedCallback() {
-    // chassis.TIM_100ms_Alive_PeriodElapsedCallback();
-    // nowTime = HAL_GetTick();
-    // flag_check = true;
-    dr16.TIM_100ms_Alive_PeriodElapsedCallback();
-}
 
 /**
  * @brief 初始化任务
  *
  */
 void Task_Init() {
-    CAN_Init(&hcan1, Device_CAN1_Callback);
-    CAN_Init(&hcan2, Device_CAN2_Callback);
-
-    TIM_Init(&htim3, TIM_100ms_PeriodElapsedCallback);
-
-    UART_Init(&huart3, DR16_UART3_Callback, 18);
-    dr16.Init(&huart3);
-    LOG_INFO("遥控器初始化完成");
-
-    motor_x_p.Init(&hcan1, Motor_DJI_ID_0x201);
-    motor_x_p.PID_Omega.Init(2.0, 0.1, 0.01, 1.0, 100, 10, 0.001, 0.1, 0.3, -2, 2, PID_D_First_ENABLE);
-    motor_x_m.Init(&hcan1, Motor_DJI_ID_0x203);
-    motor_x_m.PID_Omega.Init(2.0, 0.1, 0.01, 1.0, 100, 10, 0.001, 0.1, 0.3, -2, 2, PID_D_First_ENABLE);
-    motor_y_p.Init(&hcan1, Motor_DJI_ID_0x202);
-    motor_y_p.PID_Omega.Init(2.0, 0.1, 0.01, 1.0, 100, 10, 0.001, 0.1, 0.3, -2, 2, PID_D_First_ENABLE);
-    motor_y_m.Init(&hcan1, Motor_DJI_ID_0x204);
-    motor_y_m.PID_Omega.Init(2.0, 0.1, 0.01, 1.0, 100, 10, 0.001, 0.1, 0.3, -2, 2, PID_D_First_ENABLE);
-    LOG_INFO("底盘电机初始化完成");
-
-    chassis.chassis_init(motor_x_p, motor_x_m, motor_y_p, motor_y_m);
-    LOG_INFO("底盘初始化完成");
+    Robot::init();
 
     init_finished = true;
-    HAL_TIM_Base_Start_IT(&htim3);
+
 }
 
 /**
@@ -161,28 +66,7 @@ void Task_Init() {
 void Task_Loop() {
     Debug_Cmd_Poll_Callback();
 
-    // if(readFlag(test_motor)){
-    //     motor_x_p.TIM_Calculate_PeriodElapsedCallback();
-    // }
-
-    // if(readFlag(flag_dr16TIM_1ms)){
-    //     dr16.TIM_1ms_Calculate_PeriodElapsedCallback();
-    // }
-
-    // if(readFlag(flag_check)){
-    //     LOG_WARNING("检查！" + std::to_string(nowTime - lastTime) + "ms");
-    //     lastTime = nowTime;
-    // }
-
-    if (readFlag(flag_1ms)) {
-        if (dr16.Get_Status() != DR16_Status_ENABLE) {
-            chassis.Set_Control_Target(0, 0, 0, true);
-        }
-        chassis.TIM_1ms_Calculate_PeriodElapsedCallback();
-        chassis.m_IMU.TIM_1ms_Calculate_PeriodElapsedCallback();
-
-        TIM_1ms_CAN_PeriodElapsedCallback();
-    }
+    Robot::loop();
 }
 
 /************************ COPYRIGHT(C) USTC-ROBOWALKER

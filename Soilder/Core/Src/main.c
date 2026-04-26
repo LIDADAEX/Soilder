@@ -28,9 +28,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "5_Task/tsk_config_and_callback.h"
-#include "usbd_cdc_if.h"
+#include "retarget.h"
 #include "stm32f407xx.h"
+#include "5_Task/tsk_config_and_callback.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -51,55 +51,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-__asm(".global __use_no_semihosting\n\t");
 
-static uint8_t putchar_buff[128];
-static uint16_t putchar_length = 0;
-static uint32_t putchar_startTime;
-
-void stdout_putchar(char ch)
-{
-
-  if (putchar_length == 0)
-  {
-    putchar_startTime = HAL_GetTick();
-  }
-
-  putchar_buff[putchar_length] = ch;
-
-  putchar_length++;
-
-  // �����������չ�128�ֽ�
-  if (putchar_length >= 128)
-  {
-    // ����ֱ��Ӳ������
-    while (CDC_Transmit_FS(putchar_buff, putchar_length) == USBD_BUSY)
-      ;
-    // ����һ��Ҫ���㳤�ȣ��´ν���ʱ�����´��� startTime ����
-    putchar_length = 0;
-  }
-}
-
-void check_putchar()
-{
-  if (putchar_length != 0 && (HAL_GetTick() - putchar_startTime >= 10))
-  {
-    if (CDC_Transmit_FS(putchar_buff, putchar_length) != USBD_BUSY)
-      putchar_length = 0;
-  }
-}
-
-void ttywrch(int ch)
-{
-  uint8_t data = (uint8_t)ch; // ��ʽת����ȷ��ֻȡ��8λ
-  while (CDC_Transmit_FS(&data, 1) == USBD_BUSY);
-}
-
-void _sys_exit(int x)
-{
-  while (1)
-    ;
-}
 
 /* USER CODE END PV */
 
