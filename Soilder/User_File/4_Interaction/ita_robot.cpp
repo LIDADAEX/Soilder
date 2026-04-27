@@ -67,27 +67,29 @@ enum class GimbalMode{
 };
 
 #pragma pack(push, 1) // 强制 1 字节对齐，防止编译器乱加填充
-struct Struct_Gimbal_Send_Packet {
-    uint8_t header[2];   // 'S', 'P'
-    uint8_t mode;
-    float q[4] = {0};          // 四元数
-    float yaw = 0;
-    float yaw_vel = 0;
-    float pitch = 0;
-    float pitch_vel = 0;
-    float shootSpeed;
-    uint16_t ammo_remain; // 弹丸剩余通常是 uint16_t
-    uint16_t crc16;
-};
+struct Struct_Robot_Main_Packet {
+	struct{
+		uint8_t header[2];   // 'S', 'P'
+		uint8_t mode;
+		float q[4] = {0};          // 四元数
+		float yaw = 0;
+		float yaw_vel = 0;
+		float pitch = 0;
+		float pitch_vel = 0;
+		float shootSpeed;
+		uint16_t ammo_remain; // 弹丸剩余通常是 uint16_t
+		uint16_t crc16;
+	}struct_Gimbal_Send_Packet;
 
-struct Struct_navPacket {
-    uint8_t header;   
-    uint8_t Stage_Enum;
-    uint16_t Remaining_Time;
-    uint16_t Current_hp;
-    uint8_t middle_buff_status;
-    uint8_t crc16;
-    uint8_t tail;
+	struct{
+		uint8_t header;   
+		uint8_t Stage_Enum;
+		uint16_t Remaining_Time;
+		uint16_t Current_hp;
+		uint8_t middle_buff_status;
+		uint8_t crc16;
+		uint8_t tail;
+	}struct_navPacket ;
 };
 #pragma pack(pop)
 
@@ -100,38 +102,34 @@ enum class ControlState{
 
 
 void Robot::TIM_1ms_Calculate_PeriodElapsedCallback(){
-    if ((dr16.Get_Status() != DR16_Status_ENABLE) || (controlState != ControlState::enable)) {
+    if ((dr16.Get_Status() != DR16_Status_ENABLE) && (controlState != ControlState::enable)) {
         chassis.Set_Control_Target(0, 0, 0, true);
     }
     chassis.TIM_1ms_Calculate_PeriodElapsedCallback();
     chassis.m_IMU.TIM_1ms_Calculate_PeriodElapsedCallback();
 
-    Struct_navPacket navPacket;
-    navPacket.header = '@';
-    navPacket.Stage_Enum = Robot::referee.Game_Status.Stage_Enum;
-    navPacket.Remaining_Time = Robot::referee.Game_Status.Remaining_Time;
-    navPacket.Current_hp = Robot::referee.Robot_Status.HP;
-    navPacket.middle_buff_status = Robot::referee.Robot_Buff.Defend_Buff_Percent;
-    navPacket.tail = '#';
+    Struct_Robot_Main_Packet packet;
+    packet.struct_navPacket.header = '@';
+    packet.struct_navPacket.Stage_Enum = Robot::referee.Game_Status.Stage_Enum;
+    packet.struct_navPacket.Remaining_Time = Robot::referee.Game_Status.Remaining_Time;
+    packet.struct_navPacket.Current_hp = Robot::referee.Robot_Status.HP;
+    packet.struct_navPacket.middle_buff_status = Robot::referee.Robot_Buff.Defend_Buff_Percent;
+    packet.struct_navPacket.tail = '#';
 
-    navPacket.crc16 = Class_Referee::Get_CRC16((uint8_t*)&navPacket, 10, 0xffff);
-
-    CDC_Transmit_FS((uint8_t*)&navPacket, 10);
+    packet.struct_navPacket.crc16 = Class_Referee::Get_CRC16((uint8_t*)&packet.struct_navPacket, 10, 0xffff);
 
     static GimbalMode mode = GimbalMode::none;
-
-    Struct_Gimbal_Send_Packet packet;
     
-    packet.header[0] = 'S';
-    packet.header[1] = 'P';
-    packet.mode = (uint8_t)mode;
+    packet.struct_Gimbal_Send_Packet.header[0] = 'S';
+    packet.struct_Gimbal_Send_Packet.header[1] = 'P';
+    packet.struct_Gimbal_Send_Packet.mode = (uint8_t)mode;
     
-    packet.shootSpeed = Robot::referee.Get_Shoot_Initial_Speed();
-    packet.ammo_remain = Robot::referee.Get_Ammo_17mm_1_Remain();
+    packet.struct_Gimbal_Send_Packet.shootSpeed = Robot::referee.Get_Shoot_Initial_Speed();
+    packet.struct_Gimbal_Send_Packet.ammo_remain = Robot::referee.Get_Ammo_17mm_1_Remain();
 
-    packet.crc16 = Class_Referee::Get_CRC16((uint8_t*)&packet, 10, 0xffff);
+    packet.struct_Gimbal_Send_Packet.crc16 = Class_Referee::Get_CRC16((uint8_t*)&packet.struct_Gimbal_Send_Packet, 7 + 9 * sizeof(float), 0xffff);
 
-    CDC_Transmit_FS((uint8_t*)&packet, 7 + 9 * sizeof(float));
+    CDC_Transmit_FS((uint8_t*)&packet, 17 + 9 * sizeof(float));
 }
 
 void cmd_0x6A(uint8_t* cmd){
@@ -183,7 +181,8 @@ void Robot::Device_CAN2_Callback(Struct_CAN_Rx_Buffer* CAN_RxMessage) {
 extern void Debug_FIFO_Push(uint8_t data);
 
 void Robot::Debug_USART6_Callback(uint8_t* Rx_Data, uint16_t Length){
-    for (uint32_t i = 0; i < Length; i++) {
+    
+	for (uint32_t i = 0; i < Length; i++) {
         Debug_FIFO_Push(Rx_Data[i]);
     }
 }
