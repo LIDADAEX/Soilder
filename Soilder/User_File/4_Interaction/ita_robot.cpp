@@ -70,12 +70,11 @@ enum class GimbalMode{
 struct Struct_Robot_Main_Packet {
 	struct{
 		uint8_t header[2];   // 'S', 'P'
-		uint8_t mode;
 		float q[4] = {0};          // 四元数
 		float yaw = 0;
-		float yaw_vel = 0;
+		//float yaw_vel = 0;
 		float pitch = 0;
-		float pitch_vel = 0;
+		//float pitch_vel = 0;
 		float shootSpeed;
 		uint16_t ammo_remain; // 弹丸剩余通常是 uint16_t
 		uint16_t crc16;
@@ -87,7 +86,7 @@ struct Struct_Robot_Main_Packet {
 		uint16_t Remaining_Time;
 		uint16_t Current_hp;
 		uint8_t middle_buff_status;
-		uint8_t crc16;
+		// uint8_t crc16;
 		uint8_t tail;
 	}struct_navPacket ;
 };
@@ -116,20 +115,21 @@ void Robot::TIM_1ms_Calculate_PeriodElapsedCallback(){
     packet.struct_navPacket.middle_buff_status = Robot::referee.Robot_Buff.Defend_Buff_Percent;
     packet.struct_navPacket.tail = '#';
 
-    packet.struct_navPacket.crc16 = Class_Referee::Get_CRC16((uint8_t*)&packet.struct_navPacket, 10, 0xffff);
+    //spacket.struct_navPacket.crc16 = Class_Referee::Get_CRC16((uint8_t*)&packet.struct_navPacket, 8, 0xffff);
 
     static GimbalMode mode = GimbalMode::none;
     
     packet.struct_Gimbal_Send_Packet.header[0] = 'S';
     packet.struct_Gimbal_Send_Packet.header[1] = 'P';
-    packet.struct_Gimbal_Send_Packet.mode = (uint8_t)mode;
     
     packet.struct_Gimbal_Send_Packet.shootSpeed = Robot::referee.Get_Shoot_Initial_Speed();
     packet.struct_Gimbal_Send_Packet.ammo_remain = Robot::referee.Get_Ammo_17mm_1_Remain();
+    packet.struct_Gimbal_Send_Packet.yaw = Robot::chassis.m_IMU.Data.yaw;
+    packet.struct_Gimbal_Send_Packet.pitch = Robot::chassis.m_IMU.Data.pitch;
 
-    packet.struct_Gimbal_Send_Packet.crc16 = Class_Referee::Get_CRC16((uint8_t*)&packet.struct_Gimbal_Send_Packet, 7 + 9 * sizeof(float), 0xffff);
+    packet.struct_Gimbal_Send_Packet.crc16 = Class_Referee::Get_CRC16((uint8_t*)&packet.struct_Gimbal_Send_Packet, 6 + 7 * sizeof(float), 0xffff);
 
-    CDC_Transmit_FS((uint8_t*)&packet, 17 + 9 * sizeof(float));
+    CDC_Transmit_FS((uint8_t*)&packet, 14 + 7 * sizeof(float));
 }
 
 void cmd_0x6A(uint8_t* cmd){
