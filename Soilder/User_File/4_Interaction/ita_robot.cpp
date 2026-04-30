@@ -33,13 +33,13 @@ void Robot::init(){
     LOG_INFO("遥控器初始化完成");
 
     motor_x_p.Init(&hcan1, Motor_DJI_ID_0x201);
-    motor_x_p.PID_Omega.Init(2.0, 0.1, 0.01, 1.0, 100, 10, 0.001, 0.1, 0.3, -2, 2, PID_D_First_ENABLE);
+    motor_x_p.PID_Omega.Init(0.5, 0.1, 0.01, 1.0, 100, 10, 0.001, 0.1, 0.3, -2, 2, PID_D_First_ENABLE);
     motor_x_m.Init(&hcan1, Motor_DJI_ID_0x203);
-    motor_x_m.PID_Omega.Init(2.0, 0.1, 0.01, 1.0, 100, 10, 0.001, 0.1, 0.3, -2, 2, PID_D_First_ENABLE);
+    motor_x_m.PID_Omega.Init(0.5, 0.1, 0.01, 1.0, 100, 10, 0.001, 0.1, 0.3, -2, 2, PID_D_First_ENABLE);
     motor_y_p.Init(&hcan1, Motor_DJI_ID_0x202);
-    motor_y_p.PID_Omega.Init(2.0, 0.1, 0.01, 1.0, 100, 10, 0.001, 0.1, 0.3, -2, 2, PID_D_First_ENABLE);
+    motor_y_p.PID_Omega.Init(0.5, 0.1, 0.01, 1.0, 100, 10, 0.001, 0.1, 0.3, -2, 2, PID_D_First_ENABLE);
     motor_y_m.Init(&hcan1, Motor_DJI_ID_0x204);
-    motor_y_m.PID_Omega.Init(2.0, 0.1, 0.01, 1.0, 100, 10, 0.001, 0.1, 0.3, -2, 2, PID_D_First_ENABLE);
+    motor_y_m.PID_Omega.Init(0.5, 0.1, 0.01, 1.0, 100, 10, 0.001, 0.1, 0.3, -2, 2, PID_D_First_ENABLE);
     LOG_INFO("底盘电机初始化完成");
 
     chassis.chassis_init(motor_x_p, motor_x_m, motor_y_p, motor_y_m);
@@ -101,9 +101,9 @@ enum class ControlState{
 
 
 void Robot::TIM_1ms_Calculate_PeriodElapsedCallback(){
-    if ((dr16.Get_Status() != DR16_Status_ENABLE) && (controlState != ControlState::enable)) {
-        chassis.Set_Control_Target(0, 0, 0, true);
-    }
+//    if ((dr16.Get_Status() != DR16_Status_ENABLE) && (controlState != ControlState::enable)) {
+//        chassis.Set_Control_Target(0, 0, 0, true);
+//    }
     chassis.TIM_1ms_Calculate_PeriodElapsedCallback();
     chassis.m_IMU.TIM_1ms_Calculate_PeriodElapsedCallback();
 
@@ -124,8 +124,8 @@ void Robot::TIM_1ms_Calculate_PeriodElapsedCallback(){
     
     packet.struct_Gimbal_Send_Packet.shootSpeed = Robot::referee.Get_Shoot_Initial_Speed();
     packet.struct_Gimbal_Send_Packet.ammo_remain = Robot::referee.Get_Ammo_17mm_1_Remain();
-    packet.struct_Gimbal_Send_Packet.yaw = Robot::chassis.m_IMU.Data.yaw;
-    packet.struct_Gimbal_Send_Packet.pitch = Robot::chassis.m_IMU.Data.pitch;
+    packet.struct_Gimbal_Send_Packet.yaw = Robot::chassis.m_IMU.Get_Yaw();
+    packet.struct_Gimbal_Send_Packet.pitch = Robot::chassis.m_IMU.Get_Pitch();
 
     packet.struct_Gimbal_Send_Packet.crc16 = Class_Referee::Get_CRC16((uint8_t*)&packet.struct_Gimbal_Send_Packet, 6 + 7 * sizeof(float), 0xffff);
 
@@ -195,12 +195,13 @@ void Robot::Referee_USART4_Callback(uint8_t* Rx_Data, uint16_t Length) {
 void Robot::DR16_UART3_Callback(uint8_t* Rx_Data, uint16_t Length) {
     if(!init_finished) return;
     dr16.UART_RxCpltCallback(Rx_Data, Length);
-    chassis.Set_Control_Target(dr16.Get_Left_X(), dr16.Get_Left_Y(), dr16.Get_Yaw(), true);
+    auto& data = dr16.Get_Data();
+    chassis.Set_Control_Target(data.Left_X, data.Left_Y, data.Side_Wheel, true);
 } 
 
 void Robot::TIM_100ms_PeriodElapsedCallback() {
     if(!init_finished) return;
-    dr16.TIM_100ms_Alive_PeriodElapsedCallback();
+    dr16.TIM_Alive_PeriodElapsedCallback();
 
     if(past_flag != flag){
         past_flag = flag;

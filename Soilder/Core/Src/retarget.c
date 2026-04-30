@@ -1,5 +1,5 @@
 #include "stm32f4xx_hal.h"
-#include "stdint.h"
+
 __asm(".global __use_no_semihosting\n\t");
 
 extern UART_HandleTypeDef huart6;

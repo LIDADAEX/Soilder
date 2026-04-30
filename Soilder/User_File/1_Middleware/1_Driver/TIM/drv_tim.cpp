@@ -1,26 +1,15 @@
 /**
- * @file drv_tim.cpp
- * @author yssickjgd (1345578933@qq.com)
- * @brief TIM定时器初始化与配置流程, 仅有中断回调函数参9
- * @version 1.1
- * @date 2023-08-29 0.1 23赛季定稿
- * @date 2023-11-10 1.1 修改成cpp, 24赛季定稿
- * @date 2024-08-22 2.1 新增回调函数空指针判定
- *
- * @copyright USTC-RoboWalker (c) 2023
- *
+ * @brief TIM 定时器驱动
+ * @note 统一管理所有定时器中断回调，支持 TIM1 - TIM14
  */
 
 /* Includes ------------------------------------------------------------------*/
 
 #include "drv_tim.h"
 
-/* Private macros ------------------------------------------------------------*/
-
-/* Private types -------------------------------------------------------------*/
-
 /* Private variables ---------------------------------------------------------*/
 
+// 使用数组管理对象，以便通过索引或辅助函数快速定位
 Struct_TIM_Manage_Object TIM1_Manage_Object;
 Struct_TIM_Manage_Object TIM2_Manage_Object;
 Struct_TIM_Manage_Object TIM3_Manage_Object;
@@ -36,131 +25,62 @@ Struct_TIM_Manage_Object TIM12_Manage_Object;
 Struct_TIM_Manage_Object TIM13_Manage_Object;
 Struct_TIM_Manage_Object TIM14_Manage_Object;
 
-/* Private function declarations ---------------------------------------------*/
-
-/* function prototypes -------------------------------------------------------*/
+/* Private Functions ---------------------------------------------------------*/
 
 /**
- * @brief 初始化TIM定时器
- *
- * @param htim 定时器编号
+ * @brief 根据 TIM 实例获取对应的管理对象
+ * @param htim 定时器句柄
+ * @return Struct_TIM_Manage_Object* 对应的管理对象指针，若未找到则返回 nullptr
+ */
+static Struct_TIM_Manage_Object* Get_TIM_Manage_Object(TIM_HandleTypeDef* htim) {
+    if (htim->Instance == TIM1)  return &TIM1_Manage_Object;
+    if (htim->Instance == TIM2)  return &TIM2_Manage_Object;
+    if (htim->Instance == TIM3)  return &TIM3_Manage_Object;
+    if (htim->Instance == TIM4)  return &TIM4_Manage_Object;
+    if (htim->Instance == TIM5)  return &TIM5_Manage_Object;
+    if (htim->Instance == TIM6)  return &TIM6_Manage_Object;
+    if (htim->Instance == TIM7)  return &TIM7_Manage_Object;
+    if (htim->Instance == TIM8)  return &TIM8_Manage_Object;
+    if (htim->Instance == TIM9)  return &TIM9_Manage_Object;
+    if (htim->Instance == TIM10) return &TIM10_Manage_Object;
+    if (htim->Instance == TIM11) return &TIM11_Manage_Object;
+    if (htim->Instance == TIM12) return &TIM12_Manage_Object;
+    if (htim->Instance == TIM13) return &TIM13_Manage_Object;
+    if (htim->Instance == TIM14) return &TIM14_Manage_Object;
+    return nullptr;
+}
+
+/* Function Prototypes -------------------------------------------------------*/
+
+/**
+ * @brief 初始化 TIM 定时器
+ * @param htim 定时器句柄
  * @param Callback_Function 处理回调函数
  */
 void TIM_Init(TIM_HandleTypeDef* htim, TIM_Call_Back Callback_Function) {
-    if (htim->Instance == TIM1) {
-        TIM1_Manage_Object.TIM_Handler = htim;
-        TIM1_Manage_Object.Callback_Function = Callback_Function;
-    } else if (htim->Instance == TIM2) {
-        TIM2_Manage_Object.TIM_Handler = htim;
-        TIM2_Manage_Object.Callback_Function = Callback_Function;
-    } else if (htim->Instance == TIM3) {
-        TIM3_Manage_Object.TIM_Handler = htim;
-        TIM3_Manage_Object.Callback_Function = Callback_Function;
-    } else if (htim->Instance == TIM4) {
-        TIM4_Manage_Object.TIM_Handler = htim;
-        TIM4_Manage_Object.Callback_Function = Callback_Function;
-    } else if (htim->Instance == TIM5) {
-        TIM5_Manage_Object.TIM_Handler = htim;
-        TIM5_Manage_Object.Callback_Function = Callback_Function;
-    } else if (htim->Instance == TIM6) {
-        TIM6_Manage_Object.TIM_Handler = htim;
-        TIM6_Manage_Object.Callback_Function = Callback_Function;
-    } else if (htim->Instance == TIM7) {
-        TIM7_Manage_Object.TIM_Handler = htim;
-        TIM7_Manage_Object.Callback_Function = Callback_Function;
-    } else if (htim->Instance == TIM8) {
-        TIM8_Manage_Object.TIM_Handler = htim;
-        TIM8_Manage_Object.Callback_Function = Callback_Function;
-    } else if (htim->Instance == TIM9) {
-        TIM9_Manage_Object.TIM_Handler = htim;
-        TIM9_Manage_Object.Callback_Function = Callback_Function;
-    } else if (htim->Instance == TIM10) {
-        TIM10_Manage_Object.TIM_Handler = htim;
-        TIM10_Manage_Object.Callback_Function = Callback_Function;
-    } else if (htim->Instance == TIM11) {
-        TIM11_Manage_Object.TIM_Handler = htim;
-        TIM11_Manage_Object.Callback_Function = Callback_Function;
-    } else if (htim->Instance == TIM12) {
-        TIM12_Manage_Object.TIM_Handler = htim;
-        TIM12_Manage_Object.Callback_Function = Callback_Function;
-    } else if (htim->Instance == TIM13) {
-        TIM13_Manage_Object.TIM_Handler = htim;
-        TIM13_Manage_Object.Callback_Function = Callback_Function;
-    } else if (htim->Instance == TIM14) {
-        TIM14_Manage_Object.TIM_Handler = htim;
-        TIM14_Manage_Object.Callback_Function = Callback_Function;
+    if (htim == nullptr) return;
+
+    Struct_TIM_Manage_Object* obj = Get_TIM_Manage_Object(htim);
+    
+    if (obj != nullptr) {
+        obj->TIM_Handler = htim;
+        obj->Callback_Function = Callback_Function;
     }
 }
 
 /**
- * @brief HAL库TIM定时器中断
- *
- * @param htim TIM编号
+ * @brief HAL 库 TIM 定时器周期溢出中断回调
  */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim) {
-    // 判断程序初始化完成
-    if (init_finished == false) {
+    // 卫语句：判断初始化状态
+    if (!init_finished || htim == nullptr) {
         return;
     }
 
-    // 选择回调函数
-    if (htim->Instance == TIM1) {
-        if (TIM1_Manage_Object.Callback_Function != nullptr) {
-            TIM1_Manage_Object.Callback_Function();
-        }
-    } else if (htim->Instance == TIM2) {
-        if (TIM2_Manage_Object.Callback_Function != nullptr) {
-            TIM2_Manage_Object.Callback_Function();
-        }
-    } else if (htim->Instance == TIM3) {
-        if (TIM3_Manage_Object.Callback_Function != nullptr) {
-            TIM3_Manage_Object.Callback_Function();
-        }
-    } else if (htim->Instance == TIM4) {
-        if (TIM4_Manage_Object.Callback_Function != nullptr) {
-            TIM4_Manage_Object.Callback_Function();
-        }
-    } else if (htim->Instance == TIM5) {
-        if (TIM5_Manage_Object.Callback_Function != nullptr) {
-            TIM5_Manage_Object.Callback_Function();
-        }
-    } else if (htim->Instance == TIM6) {
-        if (TIM6_Manage_Object.Callback_Function != nullptr) {
-            TIM6_Manage_Object.Callback_Function();
-        }
-    } else if (htim->Instance == TIM7) {
-        if (TIM7_Manage_Object.Callback_Function != nullptr) {
-            TIM7_Manage_Object.Callback_Function();
-        }
-    } else if (htim->Instance == TIM8) {
-        if (TIM8_Manage_Object.Callback_Function != nullptr) {
-            TIM8_Manage_Object.Callback_Function();
-        }
-    } else if (htim->Instance == TIM9) {
-        if (TIM9_Manage_Object.Callback_Function != nullptr) {
-            TIM9_Manage_Object.Callback_Function();
-        }
-    } else if (htim->Instance == TIM10) {
-        if (TIM10_Manage_Object.Callback_Function != nullptr) {
-            TIM10_Manage_Object.Callback_Function();
-        }
-    } else if (htim->Instance == TIM11) {
-        if (TIM11_Manage_Object.Callback_Function != nullptr) {
-            TIM11_Manage_Object.Callback_Function();
-        }
-    } else if (htim->Instance == TIM12) {
-        if (TIM12_Manage_Object.Callback_Function != nullptr) {
-            TIM12_Manage_Object.Callback_Function();
-        }
-    } else if (htim->Instance == TIM13) {
-        if (TIM13_Manage_Object.Callback_Function != nullptr) {
-            TIM13_Manage_Object.Callback_Function();
-        }
-    } else if (htim->Instance == TIM14) {
-        if (TIM14_Manage_Object.Callback_Function != nullptr) {
-            TIM14_Manage_Object.Callback_Function();
-        }
+    Struct_TIM_Manage_Object* obj = Get_TIM_Manage_Object(htim);
+
+    // 执行回调
+    if (obj != nullptr && obj->Callback_Function != nullptr) {
+        obj->Callback_Function();
     }
 }
-
-/************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/

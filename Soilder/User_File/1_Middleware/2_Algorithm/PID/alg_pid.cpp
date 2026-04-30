@@ -1,173 +1,123 @@
 /**
- * @file alg_pid.cpp
- * @author yssickjgd 1345578933@qq.com
- * @brief PID算法
- * @version 0.1
- * @date 2023-08-29 0.1 23赛季定稿
- *
- * @copyright USTC-RoboWalker (c) 2023
- *
+ * @brief PID 算法模块
+ * @note 采用 m_ 前缀标识成员变量，优化变速积分与前馈逻辑
  */
 
 /* Includes ------------------------------------------------------------------*/
 
 #include "alg_pid.h"
 
-/* Private macros ------------------------------------------------------------*/
-
-/* Private types -------------------------------------------------------------*/
-
-/* Private variables ---------------------------------------------------------*/
-
-/* Private function declarations ---------------------------------------------*/
-
-/* Function prototypes -------------------------------------------------------*/
+/* Function Prototypes -------------------------------------------------------*/
 
 /**
- * @brief PID初始化
- *
- * @param __K_P P值
- * @param __K_I I值
- * @param __K_D D值
- * @param __K_F 前馈
- * @param __I_Out_Max 积分限幅
- * @param __Out_Max 输出限幅
- * @param __D_T 时间片长度
- * @param __Dead_Zone 死区误差阈值
- * @param __I_Variable_Speed_A 变速积分误差阈值A
- * @param __I_Variable_Speed_B 变速积分误差阈值B
- * @param __I_Separate_Threshold 积分分离误差阈值
- * @param __D_First 是否开启微分先行
+ * @brief PID 参数初始化
+ * @param K_P P项系数
+ * @param K_I I项系数
+ * @param K_D D项系数
+ * @param K_F 前馈系数
+ * @param I_Out_Max 积分输出限幅
+ * @param Out_Max 总输出限幅
+ * @param D_T 计算周期 (s)
+ * @param Dead_Zone 死区控制阈值
+ * @param I_Variable_Speed_A 变速积分起始阈值
+ * @param I_Variable_Speed_B 变速积分截止阈值
+ * @param I_Separate_Threshold 积分分离阈值
+ * @param D_First 是否开启微分先行
  */
-void Class_PID::Init(float __K_P,
-                     float __K_I,
-                     float __K_D,
-                     float __K_F,
-                     float __I_Out_Max,
-                     float __Out_Max,
-                     float __D_T,
-                     float __Dead_Zone,
-                     float __I_Variable_Speed_A,
-                     float __I_Variable_Speed_B,
-                     float __I_Separate_Threshold,
-                     Enum_PID_D_First __D_First) {
-    K_P = __K_P;
-    K_I = __K_I;
-    K_D = __K_D;
-    K_F = __K_F;
-    I_Out_Max = __I_Out_Max;
-    Out_Max = __Out_Max;
-    D_T = __D_T;
-    Dead_Zone = __Dead_Zone;
-    I_Variable_Speed_A = __I_Variable_Speed_A;
-    I_Variable_Speed_B = __I_Variable_Speed_B;
-    I_Separate_Threshold = __I_Separate_Threshold;
-    D_First = __D_First;
+void Class_PID::Init(float K_P, float K_I, float K_D, float K_F,
+                     float I_Out_Max, float Out_Max, float D_T,
+                     float Dead_Zone, float I_Variable_Speed_A,
+                     float I_Variable_Speed_B, float I_Separate_Threshold,
+                     Enum_PID_D_First D_First) {
+    m_K_P = K_P;
+    m_K_I = K_I;
+    m_K_D = K_D;
+    m_K_F = K_F;
+    m_I_Out_Max = I_Out_Max;
+    m_Out_Max = Out_Max;
+    m_D_T = D_T;
+    m_Dead_Zone = Dead_Zone;
+    m_I_Variable_Speed_A = I_Variable_Speed_A;
+    m_I_Variable_Speed_B = I_Variable_Speed_B;
+    m_I_Separate_Threshold = I_Separate_Threshold;
+    m_D_First = D_First;
+
+    // 清空历史状态，确保冷启动安全
+    m_Integral_Error = 0.0f;
+    m_Pre_Error = 0.0f;
+    m_Pre_Now = 0.0f;
+    m_Pre_Target = 0.0f;
+    m_Out = 0.0f;
 }
 
 /**
- * @brief PID调整值, 计算周期与D_T相同
- *
- * @return float 输出值
+ * @brief PID 计算周期回调
+ * @note 建议在定时器中断或固定周期任务中调用
  */
 void Class_PID::TIM_Calculate_PeriodElapsedCallback() {
-    // P输出
-    float p_out = 0.0f;
-    // I输出
-    float i_out = 0.0f;
-    // D输出
-    float d_out = 0.0f;
-    // F输出
-    float f_out = 0.0f;
-    // 误差
-    float error;
-    // 绝对值误差
-    float abs_error;
-    // 线性变速积分
-    float speed_ratio;
+    float p_out, i_out, d_out, f_out;
+    float error, abs_error;
+    float speed_ratio = 1.0f;
 
-    error = Target - Now;
+    // 计算当前误差
+    error = m_Target - m_Now;
     abs_error = Math_Abs(error);
 
-    // 判断死区
-    if (abs_error < Dead_Zone) {
-        Target = Now;
+    // 1. 死区处理
+    if (abs_error < m_Dead_Zone) {
         error = 0.0f;
         abs_error = 0.0f;
-    } else if (error > 0.0f && abs_error > Dead_Zone) {
-        error -= Dead_Zone;
-    } else if (error < 0.0f && abs_error > Dead_Zone) {
-        error += Dead_Zone;
     }
 
-    // 计算p项
+    // 2. P 项计算
+    p_out = m_K_P * error;
 
-    p_out = K_P * error;
-
-    // 计算i项
-
-    if (I_Variable_Speed_A == 0.0f && I_Variable_Speed_B == 0.0f) {
-        // 非变速积分
-        speed_ratio = 1.0f;
-    } else {
-        // 变速积分
-        if (abs_error <= I_Variable_Speed_A) {
+    // 3. I 项计算 (包含变速积分与积分分离逻辑)
+    // 变速积分比例计算
+    if (m_I_Variable_Speed_B > m_I_Variable_Speed_A) {
+        if (abs_error <= m_I_Variable_Speed_A) {
             speed_ratio = 1.0f;
-        } else if (I_Variable_Speed_A < abs_error && abs_error < I_Variable_Speed_B) {
-            speed_ratio = (I_Variable_Speed_B - abs_error) / (I_Variable_Speed_B - I_Variable_Speed_A);
-        } else if (abs_error >= I_Variable_Speed_B) {
+        } else if (abs_error >= m_I_Variable_Speed_B) {
             speed_ratio = 0.0f;
-        }
-    }
-    // 积分限幅
-    if (I_Out_Max != 0.0f) {
-        Math_Constrain(&Integral_Error, -I_Out_Max / K_I, I_Out_Max / K_I);
-    }
-    if (I_Separate_Threshold == 0.0f) {
-        // 没有积分分离
-        Integral_Error += speed_ratio * D_T * error;
-        i_out = K_I * Integral_Error;
-    } else {
-        // 有积分分离
-        if (abs_error < I_Separate_Threshold) {
-            // 不在积分分离区间上
-            Integral_Error += speed_ratio * D_T * error;
-            i_out = K_I * Integral_Error;
         } else {
-            // 在积分分离区间上
-            Integral_Error = 0.0f;
-            i_out = 0.0f;
+            speed_ratio = (m_I_Variable_Speed_B - abs_error) / (m_I_Variable_Speed_B - m_I_Variable_Speed_A);
         }
     }
 
-    // 计算d项
-
-    if (D_First == PID_D_First_DISABLE) {
-        // 没有微分先行
-        d_out = K_D * (error - Pre_Error) / D_T;
+    // 积分分离逻辑：若误差过大，直接清空积分，防止严重超调
+    if (m_I_Separate_Threshold != 0.0f && abs_error >= m_I_Separate_Threshold) {
+        m_Integral_Error = 0.0f;
     } else {
-        // 微分先行使能
-        d_out = -K_D * (Now - Pre_Now) / D_T;
+        m_Integral_Error += speed_ratio * error * m_D_T;
+        // 积分抗饱和限制 (Anti-Windup)
+        if (m_I_Out_Max != 0.0f) {
+            float i_limit = m_I_Out_Max / m_K_I;
+            Math_Constrain(&m_Integral_Error, -i_limit, i_limit);
+        }
+    }
+    i_out = m_K_I * m_Integral_Error;
+
+    // 4. D 项计算 (标准微分 vs 微分先行)
+    if (m_D_First == PID_D_First_DISABLE) {
+        // 标准微分：基于误差变化，响应快但目标突变时有冲击
+        d_out = m_K_D * (error - m_Pre_Error) / m_D_T;
+    } else {
+        // 微分先行：基于测量值变化，输出平滑，适合目标频繁跳变的系统
+        d_out = -m_K_D * (m_Now - m_Pre_Now) / m_D_T;
     }
 
-    // 计算前馈
+    // 5. 前馈补偿计算 (Feed-Forward)
+    // 采用静态前馈，用于补偿系统的基础负载（如重力、静摩擦等）
+    f_out = m_K_F * m_Target;
 
-    f_out = K_F * (Target - Pre_Target);
-
-    // 计算输出
-
-    Out = p_out + i_out + d_out + f_out;
-
-    // 输出限幅
-    if (Out_Max != 0.0f) {
-        Math_Constrain(&Out, -Out_Max, Out_Max);
+    // 6. 汇总输出与总输出限幅
+    m_Out = p_out + i_out + d_out + f_out;
+    if (m_Out_Max != 0.0f) {
+        Math_Constrain(&m_Out, -m_Out_Max, m_Out_Max);
     }
 
-    // 善后工作
-    Pre_Now = Now;
-    Pre_Target = Target;
-    Pre_Out = Out;
-    Pre_Error = error;
+    // 7. 更新历史记录供下次计算使用
+    m_Pre_Error = error;
+    m_Pre_Now = m_Now;
+    m_Pre_Target = m_Target;
 }
-
-/************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/

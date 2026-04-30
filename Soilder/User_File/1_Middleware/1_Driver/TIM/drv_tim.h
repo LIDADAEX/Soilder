@@ -1,34 +1,25 @@
-/**
- * @file drv_tim.h
- * @author yssickjgd (1345578933@qq.com)
- * @brief 仿照SCUT-Robotlab改写的TIM定时器初始化与配置流程
- * @version 0.1
- * @date 2023-08-29 0.1 23赛季定稿
- *
- * @copyright USTC-RoboWalker (c) 2023
- *
- */
+#pragma once
 
-#ifndef DRV_TIM_H
-#define DRV_TIM_H
+/**
+ * @brief TIM 定时器底层驱动配置
+ * @note 统一管理所有定时器中断回调的映射与初始化
+ */
 
 /* Includes ------------------------------------------------------------------*/
 
+#include <stdbool.h>
+#include "tim.h"
 #include "stm32f4xx_hal.h"
-
-/* Exported macros -----------------------------------------------------------*/
 
 /* Exported types ------------------------------------------------------------*/
 
 /**
- * @brief TIM定时器回调函数数据类型
- *
+ * @brief TIM 定时器回调函数指针类型
  */
 typedef void (*TIM_Call_Back)();
 
 /**
- * @brief TIM定时器处理结构体
- *
+ * @brief TIM 管理对象结构体
  */
 struct Struct_TIM_Manage_Object {
     TIM_HandleTypeDef* TIM_Handler;
@@ -37,13 +28,16 @@ struct Struct_TIM_Manage_Object {
 
 /* Exported variables --------------------------------------------------------*/
 
+// 全局初始化标志位
 extern bool init_finished;
 
+// 定时器硬件句柄 (按需在外部声明)
 extern TIM_HandleTypeDef htim3;
 extern TIM_HandleTypeDef htim4;
 extern TIM_HandleTypeDef htim5;
 extern TIM_HandleTypeDef htim12;
 
+// TIM 管理对象列表
 extern Struct_TIM_Manage_Object TIM1_Manage_Object;
 extern Struct_TIM_Manage_Object TIM2_Manage_Object;
 extern Struct_TIM_Manage_Object TIM3_Manage_Object;
@@ -61,8 +55,7 @@ extern Struct_TIM_Manage_Object TIM14_Manage_Object;
 
 /* Exported function declarations --------------------------------------------*/
 
+/**
+ * @brief 初始化 TIM 定时器并绑定回调函数
+ */
 void TIM_Init(TIM_HandleTypeDef* htim, TIM_Call_Back Callback_Function);
-
-#endif
-
-/************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/

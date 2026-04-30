@@ -1,28 +1,18 @@
-/**
- * @file alg_pid.h
- * @author yssickjgd (1345578933@qq.com)
- * @brief PID算法
- * @version 0.1
- * @date 2023-08-29 0.1 23赛季定稿
- *
- * @copyright USTC-RoboWalker (c) 2023
- *
- */
+#pragma once
 
-#ifndef ALG_PID_H
-#define ALG_PID_H
+/**
+ * @brief PID 算法模块头文件
+ * @note 统一采用 m_ 成员变量风格，支持高级积分补偿与微分先行
+ */
 
 /* Includes ------------------------------------------------------------------*/
 
-#include "1_Middleware/1_Driver/Math/drv_math.h"
-
-/* Exported macros -----------------------------------------------------------*/
+#include "1_Middleware/1_Driver/Math/drv_math.h" // 确保路径正确
 
 /* Exported types ------------------------------------------------------------*/
 
 /**
- * @brief 微分先行
- *
+ * @brief 微分先行枚举
  */
 enum Enum_PID_D_First {
     PID_D_First_DISABLE = 0,
@@ -30,356 +20,85 @@ enum Enum_PID_D_First {
 };
 
 /**
- * @brief Reusable, PID算法
- *
- *
+ * @brief PID 算法类
  */
 class Class_PID {
-   public:
-    void Init(float __K_P,
-              float __K_I,
-              float __K_D,
-              float __K_F = 0.0f,
-              float __I_Out_Max = 0.0f,
-              float __Out_Max = 0.0f,
-              float __D_T = 0.001f,
-              float __Dead_Zone = 0.0f,
-              float __I_Variable_Speed_A = 0.0f,
-              float __I_Variable_Speed_B = 0.0f,
-              float __I_Separate_Threshold = 0.0f,
-              Enum_PID_D_First __D_First = PID_D_First_DISABLE);
+public:
+    /**
+     * @brief 初始化 PID 参数
+     */
+    void Init(float K_P, float K_I, float K_D, float K_F = 0.0f,
+              float I_Out_Max = 0.0f, float Out_Max = 0.0f, float D_T = 0.001f,
+              float Dead_Zone = 0.0f, float I_Variable_Speed_A = 0.0f,
+              float I_Variable_Speed_B = 0.0f, float I_Separate_Threshold = 0.0f,
+              Enum_PID_D_First D_First = PID_D_First_DISABLE);
 
-    inline float Get_Integral_Error();
-
-    inline float Get_Out();
-
-    inline void Set_K_P(float __K_P);
-
-    inline void Set_K_I(float __K_I);
-
-    inline void Set_K_D(float __K_D);
-
-    inline void Set_K_F(float __K_F);
-
-    inline void Set_I_Out_Max(float __I_Out_Max);
-
-    inline void Set_Out_Max(float __Out_Max);
-
-    inline void Set_I_Variable_Speed_A(float __Variable_Speed_I_A);
-
-    inline void Set_I_Variable_Speed_B(float __Variable_Speed_I_B);
-
-    inline void Set_I_Separate_Threshold(float __I_Separate_Threshold);
-
-    inline void Set_Target(float __Target);
-
-    inline void Set_Now(float __Now);
-
-    inline void Set_Dead_Zone(float __Dead_Zone);
-
-    inline void Set_Integral_Error(float __Integral_Error);
-
-    inline float Get_K_P();
-
-    inline float Get_K_I();
-
-    inline float Get_K_D();
-
-    inline float Get_K_F();
-
-    inline float Get_I_Out_Max();
-
-    inline float Get_Out_Max();
-
-    inline float Get_Dead_Zone();
-
-    inline float Get_I_Variable_Speed_A();
-
-    inline float Get_I_Variable_Speed_B();
-
-    inline float Get_I_Separate_Threshold();
-
+    /**
+     * @brief 计算周期回调
+     */
     void TIM_Calculate_PeriodElapsedCallback();
 
-   protected:
-    // 初始化相关常量
+    /* Setter & Getter (Inline) ----------------------------------------------*/
 
-    // PID计时器周期, s
-    float D_T;
-    // 死区, Error在其绝对值内不输出
-    float Dead_Zone;
-    // 微分先行
-    Enum_PID_D_First D_First;
+    // 目标值与当前值
+    void Set_Target(float Target) { m_Target = Target; }
+    void Set_Now(float Now) { m_Now = Now; }
+    float Get_Out() const { return m_Out; }
 
-    // 常量
+    // PID 系数
+    void Set_K_P(float K_P) { m_K_P = K_P; }
+    void Set_K_I(float K_I) { m_K_I = K_I; }
+    void Set_K_D(float K_D) { m_K_D = K_D; }
+    void Set_K_F(float K_F) { m_K_F = K_F; }
+    float Get_K_P() const { return m_K_P; }
+    float Get_K_I() const { return m_K_I; }
+    float Get_K_D() const { return m_K_D; }
+    float Get_K_F() const { return m_K_F; }
 
-    // 内部变量
+    // 限幅与死区
+    void Set_I_Out_Max(float I_Out_Max) { m_I_Out_Max = I_Out_Max; }
+    void Set_Out_Max(float Out_Max) { m_Out_Max = Out_Max; }
+    void Set_Dead_Zone(float Dead_Zone) { m_Dead_Zone = Dead_Zone; }
+    float Get_I_Out_Max() const { return m_I_Out_Max; }
+    float Get_Out_Max() const { return m_Out_Max; }
+    float Get_Dead_Zone() const { return m_Dead_Zone; }
 
-    // 之前的当前值
-    float Pre_Now = 0.0f;
-    // 之前的目标值
-    float Pre_Target = 0.0f;
-    // 之前的输出值
-    float Pre_Out = 0.0f;
-    // 前向误差
-    float Pre_Error = 0.0f;
+    // 变速积分与积分分离
+    void Set_I_Variable_Speed_A(float A) { m_I_Variable_Speed_A = A; }
+    void Set_I_Variable_Speed_B(float B) { m_I_Variable_Speed_B = B; }
+    void Set_I_Separate_Threshold(float Thr) { m_I_Separate_Threshold = Thr; }
+    float Get_I_Variable_Speed_A() const { return m_I_Variable_Speed_A; }
+    float Get_I_Variable_Speed_B() const { return m_I_Variable_Speed_B; }
+    float Get_I_Separate_Threshold() const { return m_I_Separate_Threshold; }
 
-    // 读变量
+    // 积分值操作
+    void Set_Integral_Error(float Error) { m_Integral_Error = Error; }
+    float Get_Integral_Error() const { return m_Integral_Error; }
 
-    // 输出值
-    float Out = 0.0f;
+private:
+    // PID 参数成员
+    float m_K_P = 0.0f;
+    float m_K_I = 0.0f;
+    float m_K_D = 0.0f;
+    float m_K_F = 0.0f;
 
-    // 写变量
+    // 配置参数
+    float m_D_T = 0.001f;                 // 计算周期 (s)
+    float m_Dead_Zone = 0.0f;             // 死区
+    float m_I_Out_Max = 0.0f;             // 积分限幅
+    float m_Out_Max = 0.0f;               // 输出限幅
+    float m_I_Variable_Speed_A = 0.0f;    // 变速积分 A
+    float m_I_Variable_Speed_B = 0.0f;    // 变速积分 B
+    float m_I_Separate_Threshold = 0.0f;  // 积分分离阈值
+    Enum_PID_D_First m_D_First;           // 微分先行模式
 
-    // PID的P
-    float K_P = 0.0f;
-    // PID的I
-    float K_I = 0.0f;
-    // PID的D
-    float K_D = 0.0f;
-    // 前馈
-    float K_F = 0.0f;
-
-    // 积分限幅, 0为不限制
-    float I_Out_Max = 0;
-    // 输出限幅, 0为不限制
-    float Out_Max = 0;
-
-    // 变速积分定速内段阈值, 0为不限制
-    float I_Variable_Speed_A = 0.0f;
-    // 变速积分变速区间, 0为不限制
-    float I_Variable_Speed_B = 0.0f;
-    // 积分分离阈值，需为正数, 0为不限制
-    float I_Separate_Threshold = 0.0f;
-
-    // 目标值
-    float Target = 0.0f;
-    // 当前值
-    float Now = 0.0f;
-
-    // 读写变量
-
-    // 积分值
-    float Integral_Error = 0.0f;
-
-    // 内部函数
+    // 运行时状态变量
+    float m_Target = 0.0f;                // 目标值
+    float m_Now = 0.0f;                   // 当前测量值
+    float m_Out = 0.0f;                   // 输出值
+    float m_Integral_Error = 0.0f;        // 累计积分值
+    
+    float m_Pre_Now = 0.0f;               // 上次测量值
+    float m_Pre_Target = 0.0f;            // 上次目标值
+    float m_Pre_Error = 0.0f;             // 上次误差值
 };
-
-/* Exported variables --------------------------------------------------------*/
-
-/* Exported function declarations --------------------------------------------*/
-
-/**
- * @brief 获取输出值
- *
- * @return float 输出值
- */
-inline float Class_PID::Get_Integral_Error() {
-    return (Integral_Error);
-}
-
-/**
- * @brief 获取输出值
- *
- * @return float 输出值
- */
-inline float Class_PID::Get_Out() {
-    return (Out);
-}
-
-/**
- * @brief 设定PID的P
- *
- * @param __K_P PID的P
- */
-inline void Class_PID::Set_K_P(float __K_P) {
-    K_P = __K_P;
-}
-
-/**
- * @brief 设定PID的I
- *
- * @param __K_I PID的I
- */
-inline void Class_PID::Set_K_I(float __K_I) {
-    K_I = __K_I;
-}
-
-/**
- * @brief 设定PID的D
- *
- * @param __K_D PID的D
- */
-inline void Class_PID::Set_K_D(float __K_D) {
-    K_D = __K_D;
-}
-
-/**
- * @brief 设定前馈
- *
- * @param __K_D 前馈
- */
-inline void Class_PID::Set_K_F(float __K_F) {
-    K_F = __K_F;
-}
-
-/**
- * @brief 设定积分限幅, 0为不限制
- *
- * @param __I_Out_Max 积分限幅, 0为不限制
- */
-inline void Class_PID::Set_I_Out_Max(float __I_Out_Max) {
-    I_Out_Max = __I_Out_Max;
-}
-
-/**
- * @brief 设定输出限幅, 0为不限制
- *
- * @param __Out_Max 输出限幅, 0为不限制
- */
-inline void Class_PID::Set_Out_Max(float __Out_Max) {
-    Out_Max = __Out_Max;
-}
-
-/**
- * @brief 设定定速内段阈值, 0为不限制
- *
- * @param __I_Variable_Speed_A 定速内段阈值, 0为不限制
- */
-inline void Class_PID::Set_I_Variable_Speed_A(float __I_Variable_Speed_A) {
-    I_Variable_Speed_A = __I_Variable_Speed_A;
-}
-
-/**
- * @brief 设定变速区间, 0为不限制
- *
- * @param __I_Variable_Speed_B 变速区间, 0为不限制
- */
-inline void Class_PID::Set_I_Variable_Speed_B(float __I_Variable_Speed_B) {
-    I_Variable_Speed_B = __I_Variable_Speed_B;
-}
-
-/**
- * @brief 设定积分分离阈值，需为正数, 0为不限制
- *
- * @param __I_Separate_Threshold 积分分离阈值，需为正数, 0为不限制
- */
-inline void Class_PID::Set_I_Separate_Threshold(float __I_Separate_Threshold) {
-    I_Separate_Threshold = __I_Separate_Threshold;
-}
-
-/**
- * @brief 设定目标值
- *
- * @param __Target 目标值
- */
-inline void Class_PID::Set_Target(float __Target) {
-    Target = __Target;
-}
-
-/**
- * @brief 设定当前值
- *
- * @param __Now 当前值
- */
-inline void Class_PID::Set_Now(float __Now) {
-    Now = __Now;
-}
-
-/**
- * @brief 设定积分, 一般用于积分清零
- *
- * @param __Set_Integral_Error 积分值
- */
-inline void Class_PID::Set_Integral_Error(float __Integral_Error) {
-    Integral_Error = __Integral_Error;
-}
-
-/**
- * @brief 获取PID的P
- * @return float P
- */
-inline float Class_PID::Get_K_P() {
-    return K_P;
-}
-
-/**
- * @brief 获取PID的I
- * @return float I
- */
-inline float Class_PID::Get_K_I() {
-    return K_I;
-}
-
-/**
- * @brief 获取PID的D
- * @return float D
- */
-inline float Class_PID::Get_K_D() {
-    return K_D;
-}
-
-/**
- * @brief 获取前馈K_F
- * @return float K_F
- */
-inline float Class_PID::Get_K_F() {
-    return K_F;
-}
-
-/**
- * @brief 获取积分限幅
- * @return float 积分限幅值
- */
-inline float Class_PID::Get_I_Out_Max() {
-    return I_Out_Max;
-}
-
-/**
- * @brief 获取输出限幅
- * @return float 输出限幅值
- */
-inline float Class_PID::Get_Out_Max() {
-    return Out_Max;
-}
-
-/**
- * @brief 获取死区
- * @return float 死区大小
- */
-inline float Class_PID::Get_Dead_Zone() {
-    return Dead_Zone;
-}
-
-// 如果你还需要获取当前的死区设置接口，顺便帮你把 Set 也补一个，因为之前的 Init 里有但没单独的 Set
-inline void Class_PID::Set_Dead_Zone(float __Dead_Zone) {
-    Dead_Zone = __Dead_Zone;
-}
-
-/**
- * @brief 获取变速积分定速内段阈值
- * * @return float 阈值A
- */
-inline float Class_PID::Get_I_Variable_Speed_A() {
-    return (I_Variable_Speed_A);
-}
-
-/**
- * @brief 获取变速积分变速区间阈值
- * * @return float 阈值B
- */
-inline float Class_PID::Get_I_Variable_Speed_B() {
-    return (I_Variable_Speed_B);
-}
-
-/**
- * @brief 获取积分分离阈值
- * * @return float 积分分离阈值
- */
-inline float Class_PID::Get_I_Separate_Threshold() {
-    return (I_Separate_Threshold);
-}
-
-#endif
-
-/************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/

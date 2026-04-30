@@ -180,7 +180,7 @@ void Chassis::TIM_1ms_Calculate_PeriodElapsedCallback() {
     // 4. 世界坐标系变换
     if (m_is_world_frame) {
         // float32_t angle_now = m_worldPosition.getAngle();
-        float32_t angle_now = m_IMU.Data.yaw /360 * 2 * PI;
+        float32_t angle_now = m_IMU.Get_IMU_Data().Yaw /360 * 2 * PI;
         float32_t avg_omega = (m_motors[0]->Get_Now_Omega() + m_motors[1]->Get_Now_Omega() +
                                m_motors[2]->Get_Now_Omega() + m_motors[3]->Get_Now_Omega()) *
                               0.25f;

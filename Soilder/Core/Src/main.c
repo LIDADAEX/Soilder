@@ -28,8 +28,6 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "retarget.h"
-#include "stm32f407xx.h"
 #include "5_Task/tsk_config_and_callback.h"
 /* USER CODE END Includes */
 

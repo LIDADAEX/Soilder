@@ -58,7 +58,7 @@ class Chassis {
     inline bool Get_World_Frame_Status() const { return m_is_world_frame; }
     inline float32_t Get_Delay_Comp_Ms() const { return m_delay_comp_ms; }
     inline float32_t Get_Deadzone() const { return m_deadzone; }
-    inline float32_t Get_IMU_Paw() const {return m_IMU.Data.yaw; }
+    inline float32_t Get_IMU_Paw() const {return m_IMU.Get_IMU_Data().Yaw; }
 
     // --- 控制目标设置 (Setters) ---
     inline void Set_Target_VX(float32_t v_x) { m_target_vx = v_x; }
