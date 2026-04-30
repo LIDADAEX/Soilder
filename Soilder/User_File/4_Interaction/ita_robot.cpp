@@ -21,7 +21,7 @@ void HAL_SYSTICK_Callback(void) {
 
 void Robot::init(){
 
-    UART_Init(&huart6, Debug_USART6_Callback, 512);
+    UART_Init(&huart1, Debug_USART1_Callback, 512);
 
     CAN_Init(&hcan1, Device_CAN1_Callback);
     CAN_Init(&hcan2, Device_CAN2_Callback);
@@ -45,8 +45,8 @@ void Robot::init(){
     chassis.chassis_init(motor_x_p, motor_x_m, motor_y_p, motor_y_m);
     LOG_INFO("底盘初始化完成");
 
-    UART_Init(&huart4, Referee_USART4_Callback, 512);
-    referee.Init(&huart4);
+    UART_Init(&huart6, Referee_USART2_Callback, 512);
+    referee.Init(&huart6);
     LOG_INFO("裁判系统初始化完成");
 
     HAL_TIM_Base_Start_IT(&htim3);
@@ -180,14 +180,14 @@ void Robot::Device_CAN2_Callback(Struct_CAN_Rx_Buffer* CAN_RxMessage) {
 
 extern void Debug_FIFO_Push(uint8_t data);
 
-void Robot::Debug_USART6_Callback(uint8_t* Rx_Data, uint16_t Length){
+void Robot::Debug_USART1_Callback(uint8_t* Rx_Data, uint16_t Length){
     
 	for (uint32_t i = 0; i < Length; i++) {
         Debug_FIFO_Push(Rx_Data[i]);
     }
 }
 
-void Robot::Referee_USART4_Callback(uint8_t* Rx_Data, uint16_t Length) {
+void Robot::Referee_USART2_Callback(uint8_t* Rx_Data, uint16_t Length) {
     if(!init_finished) return;
     referee.UART_RxCpltCallback(Rx_Data, Length);
 }

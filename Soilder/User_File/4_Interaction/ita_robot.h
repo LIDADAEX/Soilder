@@ -27,9 +27,9 @@ private:
 
     static void Device_CAN1_Callback(Struct_CAN_Rx_Buffer* CAN_RxMessage);
     static void Device_CAN2_Callback(Struct_CAN_Rx_Buffer* CAN_RxMessage);
-    static void Debug_USART6_Callback(uint8_t* Rx_Data, uint16_t Length);
+    static void Debug_USART1_Callback(uint8_t* Rx_Data, uint16_t Length);
     static void DR16_UART3_Callback(uint8_t* Rx_Data, uint16_t Length);
-    static void Referee_USART4_Callback(uint8_t* Rx_Data, uint16_t Length);
+    static void Referee_USART2_Callback(uint8_t* Rx_Data, uint16_t Length);
 
     static void Controlcmd_DataProcess(uint8_t* Rx_Data, uint16_t Length);
 

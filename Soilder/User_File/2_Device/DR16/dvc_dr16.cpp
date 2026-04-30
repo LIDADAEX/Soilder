@@ -13,6 +13,7 @@ void Class_DR16::Init(UART_HandleTypeDef* huart) {
 void Class_DR16::UART_RxCpltCallback(uint8_t* Rx_Data, uint16_t Length) {
     if (Length == 18) {
         m_Flag++;
+		Calculate_PeriodElapsedCallback();
     }
 }
 
