@@ -11,8 +11,7 @@
  *
  */
 
-#ifndef DRV_UART_H
-#define DRV_UART_H
+#pragma once
 
 /* Includes ------------------------------------------------------------------*/
 
@@ -67,7 +66,5 @@ void UART_Reinit(UART_HandleTypeDef* huart);
 uint8_t UART_Send_Data(UART_HandleTypeDef* huart, uint8_t* Data, uint16_t Length);
 
 void TIM_1ms_UART_PeriodElapsedCallback();
-
-#endif
 
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/

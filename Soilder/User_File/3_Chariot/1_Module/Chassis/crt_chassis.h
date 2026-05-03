@@ -5,6 +5,7 @@
 #include "1_Middleware/3_Debug/debug_log.h"
 #include "2_Device/Motor/Motor_DJI/dvc_motor_dji.h"
 #include "2_Device/IMU/dm_imu.h"
+#include "2_Device/IMU_borad/BMI088.h"
 #include "arm_math.h"  // 引入 ARM DSP 库
 
 extern Class_Motor_DJI_C620 motor_x_p;
@@ -59,6 +60,7 @@ class Chassis {
     inline float32_t Get_Delay_Comp_Ms() const { return m_delay_comp_ms; }
     inline float32_t Get_Deadzone() const { return m_deadzone; }
     inline float32_t Get_IMU_Paw() const {return m_IMU.Get_IMU_Data().Yaw; }
+	inline float32_t Get_Chassis_Angle() const {return m_now_angle;}
 
     // --- 控制目标设置 (Setters) ---
     inline void Set_Target_VX(float32_t v_x) { m_target_vx = v_x; }
@@ -101,6 +103,7 @@ class Chassis {
     WorldPosition m_worldPosition;
 
     Class_IMU m_IMU;
+    BMI088 m_IMU_Board;
 
    private:
     // 内部电机指针关联数组 (0:X+, 1:X-, 2:Y+, 3:Y-)
@@ -111,6 +114,7 @@ class Chassis {
     float32_t m_target_vy = 0.0f;
     float32_t m_target_vw = 0.0f;
     float32_t m_deadzone = 0.02f;
+	float32_t m_now_angle = 0.00f;
     bool m_is_world_frame = false;
 
     // 预计算物理系数

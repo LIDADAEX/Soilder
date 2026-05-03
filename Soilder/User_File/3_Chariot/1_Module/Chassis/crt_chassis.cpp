@@ -127,6 +127,7 @@ void Chassis::chassis_init(Class_Motor_DJI_C620& x_p,
     HAL_Delay(1);
     m_IMU.Set_Active_Mode(false);
 
+    m_IMU_Board.Init(&hspi1, GPIOB, GPIO_PIN_0, GPIOA, GPIO_PIN_4);
 }
 
 void Chassis::TIM_1ms_Calculate_PeriodElapsedCallback() {
@@ -162,6 +163,8 @@ void Chassis::TIM_1ms_Calculate_PeriodElapsedCallback() {
     float32_t in_vx = (abs_vx < m_deadzone) ? 0.0f : m_target_vx;
     float32_t in_vy = (abs_vy < m_deadzone) ? 0.0f : m_target_vy;
     float32_t in_vw = (abs_vw < m_deadzone) ? 0.0f : m_target_vw;
+	
+	m_now_angle = m_IMU_Board.GetData().yaw / 360 * 2 * PI;
 
     if (in_vx == 0.0f && in_vy == 0.0f && in_vw == 0.0f) {
         for (int i = 0; i < 4; i++){ 
@@ -180,12 +183,12 @@ void Chassis::TIM_1ms_Calculate_PeriodElapsedCallback() {
     // 4. 世界坐标系变换
     if (m_is_world_frame) {
         // float32_t angle_now = m_worldPosition.getAngle();
-        float32_t angle_now = m_IMU.Get_IMU_Data().Yaw /360 * 2 * PI;
+        
         float32_t avg_omega = (m_motors[0]->Get_Now_Omega() + m_motors[1]->Get_Now_Omega() +
                                m_motors[2]->Get_Now_Omega() + m_motors[3]->Get_Now_Omega()) *
                               0.25f;
 
-        float32_t angle_predict = angle_now + avg_omega * (m_delay_comp_ms * 0.001f);
+        float32_t angle_predict = m_now_angle + avg_omega * (m_delay_comp_ms * 0.001f);
 
         float32_t sin_a = arm_sin_f32(angle_predict);
         float32_t cos_a = arm_cos_f32(angle_predict);

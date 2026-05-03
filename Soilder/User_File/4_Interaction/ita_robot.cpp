@@ -4,6 +4,7 @@
 Chassis Robot::chassis;
 Class_DR16 Robot::dr16;
 Class_Referee Robot::referee;
+NavigationHandler Robot::navigation;
 
 bool flag_1ms = false;
 
@@ -19,6 +20,9 @@ void HAL_SYSTICK_Callback(void) {
     flag_1ms = true;
 }
 
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
+}
+
 void Robot::init(){
 
     UART_Init(&huart1, Debug_USART1_Callback, 512);
@@ -27,20 +31,23 @@ void Robot::init(){
     CAN_Init(&hcan2, Device_CAN2_Callback);
 
     TIM_Init(&htim3, TIM_100ms_PeriodElapsedCallback);
+	TIM_Init(&htim2, TIM_500us_PeriodElapsedCallback);
 
     UART_Init(&huart3, DR16_UART3_Callback, 18);
     dr16.Init(&huart3);
     LOG_INFO("遥控器初始化完成");
 
     motor_x_p.Init(&hcan1, Motor_DJI_ID_0x201);
-    motor_x_p.PID_Omega.Init(0.5, 0.1, 0.01, 1.0, 100, 10, 0.001, 0.1, 0.3, -2, 2, PID_D_First_ENABLE);
+    motor_x_p.PID_Omega.Init(0.5, 0.1, 0.01, 0.1, 100, 10, 0.001, 0.1, 0.3, -2, 2, PID_D_First_ENABLE);
     motor_x_m.Init(&hcan1, Motor_DJI_ID_0x203);
-    motor_x_m.PID_Omega.Init(0.5, 0.1, 0.01, 1.0, 100, 10, 0.001, 0.1, 0.3, -2, 2, PID_D_First_ENABLE);
+    motor_x_m.PID_Omega.Init(0.5, 0.1, 0.01, 0.1, 100, 10, 0.001, 0.1, 0.3, -2, 2, PID_D_First_ENABLE);
     motor_y_p.Init(&hcan1, Motor_DJI_ID_0x202);
-    motor_y_p.PID_Omega.Init(0.5, 0.1, 0.01, 1.0, 100, 10, 0.001, 0.1, 0.3, -2, 2, PID_D_First_ENABLE);
+    motor_y_p.PID_Omega.Init(0.5, 0.1, 0.01, 0.1, 100, 10, 0.001, 0.1, 0.3, -2, 2, PID_D_First_ENABLE);
     motor_y_m.Init(&hcan1, Motor_DJI_ID_0x204);
-    motor_y_m.PID_Omega.Init(0.5, 0.1, 0.01, 1.0, 100, 10, 0.001, 0.1, 0.3, -2, 2, PID_D_First_ENABLE);
+    motor_y_m.PID_Omega.Init(0.5, 0.1, 0.01, 0.1, 100, 10, 0.001, 0.1, 0.3, -2, 2, PID_D_First_ENABLE);
     LOG_INFO("底盘电机初始化完成");
+
+    SPI_Init(&hspi1, IMU_SPI1_Callback);
 
     chassis.chassis_init(motor_x_p, motor_x_m, motor_y_p, motor_y_m);
     LOG_INFO("底盘初始化完成");
@@ -49,7 +56,10 @@ void Robot::init(){
     referee.Init(&huart6);
     LOG_INFO("裁判系统初始化完成");
 
+    navigation.Init(&chassis, &referee);
+
     HAL_TIM_Base_Start_IT(&htim3);
+	HAL_TIM_Base_Start_IT(&htim2);
 
 }
 
@@ -60,95 +70,20 @@ void Robot::loop(){
     }
 }
 
-enum class GimbalMode{
-    none,
-    controlNoFire,
-    controlAndFile
-};
-
-#pragma pack(push, 1) // 强制 1 字节对齐，防止编译器乱加填充
-struct Struct_Robot_Main_Packet {
-	struct{
-		uint8_t header[2];   // 'S', 'P'
-		float q[4] = {0};          // 四元数
-		float yaw = 0;
-		//float yaw_vel = 0;
-		float pitch = 0;
-		//float pitch_vel = 0;
-		float shootSpeed;
-		uint16_t ammo_remain; // 弹丸剩余通常是 uint16_t
-		uint16_t crc16;
-	}struct_Gimbal_Send_Packet;
-
-	struct{
-		uint8_t header;   
-		uint8_t Stage_Enum;
-		uint16_t Remaining_Time;
-		uint16_t Current_hp;
-		uint8_t middle_buff_status;
-		// uint8_t crc16;
-		uint8_t tail;
-	}struct_navPacket ;
-};
-#pragma pack(pop)
-
-static uint8_t flag = 0;
-static uint8_t past_flag = 0;
-enum class ControlState{
-    enable,
-    disable
-}controlState;
-
+void Robot::TIM_500us_PeriodElapsedCallback(){
+}
 
 void Robot::TIM_1ms_Calculate_PeriodElapsedCallback(){
-//    if ((dr16.Get_Status() != DR16_Status_ENABLE) && (controlState != ControlState::enable)) {
-//        chassis.Set_Control_Target(0, 0, 0, true);
-//    }
-    chassis.TIM_1ms_Calculate_PeriodElapsedCallback();
-    chassis.m_IMU.TIM_1ms_Calculate_PeriodElapsedCallback();
-
-    Struct_Robot_Main_Packet packet;
-    packet.struct_navPacket.header = '@';
-    packet.struct_navPacket.Stage_Enum = Robot::referee.Game_Status.Stage_Enum;
-    packet.struct_navPacket.Remaining_Time = Robot::referee.Game_Status.Remaining_Time;
-    packet.struct_navPacket.Current_hp = Robot::referee.Robot_Status.HP;
-    packet.struct_navPacket.middle_buff_status = Robot::referee.Robot_Buff.Defend_Buff_Percent;
-    packet.struct_navPacket.tail = '#';
-
-    //spacket.struct_navPacket.crc16 = Class_Referee::Get_CRC16((uint8_t*)&packet.struct_navPacket, 8, 0xffff);
-
-    static GimbalMode mode = GimbalMode::none;
-    
-    packet.struct_Gimbal_Send_Packet.header[0] = 'S';
-    packet.struct_Gimbal_Send_Packet.header[1] = 'P';
-    
-    packet.struct_Gimbal_Send_Packet.shootSpeed = Robot::referee.Get_Shoot_Initial_Speed();
-    packet.struct_Gimbal_Send_Packet.ammo_remain = Robot::referee.Get_Ammo_17mm_1_Remain();
-    packet.struct_Gimbal_Send_Packet.yaw = Robot::chassis.m_IMU.Get_Yaw();
-    packet.struct_Gimbal_Send_Packet.pitch = Robot::chassis.m_IMU.Get_Pitch();
-
-    packet.struct_Gimbal_Send_Packet.crc16 = Class_Referee::Get_CRC16((uint8_t*)&packet.struct_Gimbal_Send_Packet, 6 + 7 * sizeof(float), 0xffff);
-
-    CDC_Transmit_FS((uint8_t*)&packet, 14 + 7 * sizeof(float));
-}
-
-void cmd_0x6A(uint8_t* cmd){
-    Robot::chassis.Set_Control_Target(*(float*)cmd,*(float*) (cmd + sizeof(float)), 0, true);
-}
-
-void Robot::Controlcmd_DataProcess(uint8_t* Rx_Data, uint16_t Length){
-    uint8_t startPos = 0;
-    flag ++;
-    while(startPos != Length){
-        switch(Rx_Data[startPos]){
-            case 0x6A:{
-                cmd_0x6A(Rx_Data + startPos + 1);
-                startPos += 10;
-            }
-            break;
-        }
+    if ((dr16.Get_Status() != DR16_Status_ENABLE) && !navigation.GetAlive()) {
+        chassis.Set_Control_Target(0, 0, 0, true);
     }
+	chassis.m_IMU_Board.RequestAccelRead();
+	chassis.m_IMU_Board.RequestGyroRead();
+	
+	chassis.m_IMU.TIM_1ms_Calculate_PeriodElapsedCallback();
+    chassis.TIM_1ms_Calculate_PeriodElapsedCallback();
     
+	navigation.GenerateNavStatus();
 }
 
 void Robot::Device_CAN1_Callback(Struct_CAN_Rx_Buffer* CAN_RxMessage) {
@@ -192,6 +127,15 @@ void Robot::Referee_USART2_Callback(uint8_t* Rx_Data, uint16_t Length) {
     referee.UART_RxCpltCallback(Rx_Data, Length);
 }
 
+void Robot::IMU_SPI1_Callback(uint8_t *Tx_Buffer, uint8_t *Rx_Buffer, uint16_t Length){
+    if(((SPI1_Manage_Object.Now_GPIOx == chassis.m_IMU_Board.m_gPort) &&
+        (SPI1_Manage_Object.Now_GPIO_Pin == chassis.m_IMU_Board.m_gPin)) ||
+        ((SPI1_Manage_Object.Now_GPIOx == chassis.m_IMU_Board.m_aPort) &&
+        (SPI1_Manage_Object.Now_GPIO_Pin == chassis.m_IMU_Board.m_aPin))){
+        chassis.m_IMU_Board.SPI_TxRxCpltCallback(Tx_Buffer, Rx_Buffer, Length);
+    }
+}
+
 void Robot::DR16_UART3_Callback(uint8_t* Rx_Data, uint16_t Length) {
     if(!init_finished) return;
     dr16.UART_RxCpltCallback(Rx_Data, Length);
@@ -202,13 +146,8 @@ void Robot::DR16_UART3_Callback(uint8_t* Rx_Data, uint16_t Length) {
 void Robot::TIM_100ms_PeriodElapsedCallback() {
     if(!init_finished) return;
     dr16.TIM_Alive_PeriodElapsedCallback();
-
-    if(past_flag != flag){
-        past_flag = flag;
-        controlState = ControlState::enable;
-    }
-    else{
-        controlState = ControlState::disable;
-    }
+	chassis.m_IMU_Board.TIM_100ms_Callback();
+    navigation.TIM_100ms_Callback();
+	
 }
 

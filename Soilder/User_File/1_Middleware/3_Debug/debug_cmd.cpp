@@ -329,8 +329,8 @@ inline void handle_chassis_get(const std::string subSrcList[], uint8_t count) {
     switch (stateIdx) {
         case EnumCmdChassisStateList::now_angle:
             printf("当前角度: %.4f rad (%.2f°)\r\n",
-                   cmd_chassis.m_worldPosition.getAngle(),
-                   cmd_chassis.m_worldPosition.getAngle() * 57.3f);
+                   cmd_chassis.Get_Chassis_Angle(),
+                   cmd_chassis.Get_Chassis_Angle() * 57.3f);
             break;
         case EnumCmdChassisStateList::target_v:
             printf("目标速度: VX:%.2f, VY:%.2f, VW:%.2f\r\n",

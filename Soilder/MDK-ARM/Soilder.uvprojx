@@ -476,6 +476,62 @@
               </FileOption>
             </File>
             <File>
+              <FileName>spi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Core/Src/spi.c</FilePath>
+              <FileOption>
+                <CommonProperty>
+                  <UseCPPCompiler>2</UseCPPCompiler>
+                  <RVCTCodeConst>0</RVCTCodeConst>
+                  <RVCTZI>0</RVCTZI>
+                  <RVCTOtherData>0</RVCTOtherData>
+                  <ModuleSelection>0</ModuleSelection>
+                  <IncludeInBuild>1</IncludeInBuild>
+                  <AlwaysBuild>2</AlwaysBuild>
+                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
+                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
+                  <PublicsOnly>2</PublicsOnly>
+                  <StopOnExitCode>11</StopOnExitCode>
+                  <CustomArgument></CustomArgument>
+                  <IncludeLibraryModules></IncludeLibraryModules>
+                  <ComprImg>1</ComprImg>
+                </CommonProperty>
+                <FileArmAds>
+                  <Cads>
+                    <interw>2</interw>
+                    <Optim>0</Optim>
+                    <oTime>2</oTime>
+                    <SplitLS>2</SplitLS>
+                    <OneElfS>2</OneElfS>
+                    <Strict>2</Strict>
+                    <EnumInt>2</EnumInt>
+                    <PlainCh>2</PlainCh>
+                    <Ropi>2</Ropi>
+                    <Rwpi>2</Rwpi>
+                    <wLevel>0</wLevel>
+                    <uThumb>2</uThumb>
+                    <uSurpInc>2</uSurpInc>
+                    <uC99>2</uC99>
+                    <uGnu>2</uGnu>
+                    <useXO>2</useXO>
+                    <v6Lang>0</v6Lang>
+                    <v6LangP>0</v6LangP>
+                    <vShortEn>2</vShortEn>
+                    <vShortWch>2</vShortWch>
+                    <v6Lto>2</v6Lto>
+                    <v6WtE>2</v6WtE>
+                    <v6Rtti>2</v6Rtti>
+                    <VariousControls>
+                      <MiscControls></MiscControls>
+                      <Define></Define>
+                      <Undefine></Undefine>
+                      <IncludePath></IncludePath>
+                    </VariousControls>
+                  </Cads>
+                </FileArmAds>
+              </FileOption>
+            </File>
+            <File>
               <FileName>tim.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Core/Src/tim.c</FilePath>
@@ -621,6 +677,62 @@
               <FilePath>../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_crc.c</FilePath>
             </File>
             <File>
+              <FileName>stm32f4xx_hal_spi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_spi.c</FilePath>
+              <FileOption>
+                <CommonProperty>
+                  <UseCPPCompiler>2</UseCPPCompiler>
+                  <RVCTCodeConst>0</RVCTCodeConst>
+                  <RVCTZI>0</RVCTZI>
+                  <RVCTOtherData>0</RVCTOtherData>
+                  <ModuleSelection>0</ModuleSelection>
+                  <IncludeInBuild>1</IncludeInBuild>
+                  <AlwaysBuild>2</AlwaysBuild>
+                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
+                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
+                  <PublicsOnly>2</PublicsOnly>
+                  <StopOnExitCode>11</StopOnExitCode>
+                  <CustomArgument></CustomArgument>
+                  <IncludeLibraryModules></IncludeLibraryModules>
+                  <ComprImg>1</ComprImg>
+                </CommonProperty>
+                <FileArmAds>
+                  <Cads>
+                    <interw>2</interw>
+                    <Optim>0</Optim>
+                    <oTime>2</oTime>
+                    <SplitLS>2</SplitLS>
+                    <OneElfS>2</OneElfS>
+                    <Strict>2</Strict>
+                    <EnumInt>2</EnumInt>
+                    <PlainCh>2</PlainCh>
+                    <Ropi>2</Ropi>
+                    <Rwpi>2</Rwpi>
+                    <wLevel>0</wLevel>
+                    <uThumb>2</uThumb>
+                    <uSurpInc>2</uSurpInc>
+                    <uC99>2</uC99>
+                    <uGnu>2</uGnu>
+                    <useXO>2</useXO>
+                    <v6Lang>0</v6Lang>
+                    <v6LangP>0</v6LangP>
+                    <vShortEn>2</vShortEn>
+                    <vShortWch>2</vShortWch>
+                    <v6Lto>2</v6Lto>
+                    <v6WtE>2</v6WtE>
+                    <v6Rtti>2</v6Rtti>
+                    <VariousControls>
+                      <MiscControls></MiscControls>
+                      <Define></Define>
+                      <Undefine></Undefine>
+                      <IncludePath></IncludePath>
+                    </VariousControls>
+                  </Cads>
+                </FileArmAds>
+              </FileOption>
+            </File>
+            <File>
               <FileName>stm32f4xx_hal_tim.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim.c</FilePath>
@@ -715,6 +827,16 @@
               <FileType>5</FileType>
               <FilePath>..\User_File\1_Middleware\1_Driver\UART\drv_uart.h</FilePath>
             </File>
+            <File>
+              <FileName>drv_spi.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\User_File\1_Middleware\1_Driver\SPI\drv_spi.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>drv_spi.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\User_File\1_Middleware\1_Driver\SPI\drv_spi.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -759,6 +881,16 @@
               <FileName>alg_timer.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\User_File\1_Middleware\2_Algorithm\Timer\alg_timer.h</FilePath>
+            </File>
+            <File>
+              <FileName>alg_filter.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\User_File\1_Middleware\2_Algorithm\Filter\alg_filter.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>alg_filter.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\User_File\1_Middleware\2_Algorithm\Filter\alg_filter.h</FilePath>
             </File>
           </Files>
         </Group>
@@ -863,6 +995,31 @@
           </Files>
         </Group>
         <Group>
+          <GroupName>UserCode/2_Device/IMU_Board</GroupName>
+          <Files>
+            <File>
+              <FileName>attitude_estimator.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\User_File\2_Device\IMU_borad\attitude_estimator.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>attitude_estimator.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\User_File\2_Device\IMU_borad\attitude_estimator.h</FilePath>
+            </File>
+            <File>
+              <FileName>BMI088.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\User_File\2_Device\IMU_borad\BMI088.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>BMI088.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\User_File\2_Device\IMU_borad\BMI088.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
           <GroupName>UserCode/2_Device/Referee</GroupName>
           <Files>
             <File>
@@ -940,6 +1097,26 @@
               <FileName>crt_chassis.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\User_File\3_Chariot\1_Module\Chassis\crt_chassis.h</FilePath>
+            </File>
+            <File>
+              <FileName>naivgation.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\User_File\3_Chariot\1_Module\Nav\naivgation.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>naivgation.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\User_File\3_Chariot\1_Module\Nav\naivgation.h</FilePath>
+            </File>
+            <File>
+              <FileName>intercation.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\User_File\3_Chariot\1_Module\Nav\intercation.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>intercation.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\User_File\3_Chariot\1_Module\Nav\intercation.h</FilePath>
             </File>
           </Files>
         </Group>
@@ -1023,12 +1200,6 @@
               <FilePath>..\User_File\5_Task\tsk_config_and_callback.h</FilePath>
             </File>
           </Files>
-        </Group>
-        <Group>
-          <GroupName>::CMSIS</GroupName>
-        </Group>
-        <Group>
-          <GroupName>::Compiler</GroupName>
         </Group>
         <Group>
           <GroupName>Middlewares/Library/DSP Library/DSP Library</GroupName>
@@ -1127,6 +1298,12 @@
               </FileOption>
             </File>
           </Files>
+        </Group>
+        <Group>
+          <GroupName>::CMSIS</GroupName>
+        </Group>
+        <Group>
+          <GroupName>::Compiler</GroupName>
         </Group>
       </Groups>
     </Target>
