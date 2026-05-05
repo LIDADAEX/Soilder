@@ -2,9 +2,20 @@
 #include "arm_math.h"
 #include <math.h>
 
+// 用于记录磁力计数据的结构体
+struct MagRecord {
+    float mx;
+    float my;
+    bool valid;
+};
+
 class Class_Attitude_Estimator {
 public:
     float Roll, Pitch, Yaw; // 最终输出 (角度 deg)
+
+    // 磁力计校准参数 (可以暴露出来用于保存到EEPROM/Flash)
+    float mag_offset_x, mag_offset_y; // 硬磁偏移
+    float mag_scale_x, mag_scale_y;   // 软磁缩放
 
     void Init();
     // 增加 mx, my, mz，实现 9 轴融合
@@ -19,4 +30,10 @@ private:
     
     // 内部状态保持 (弧度 rad)，避免单位错乱
     float r, p, y; 
+
+    // --- 磁力计动态校准相关 ---
+    MagRecord Mag_Bins[180]; // -180~180度，每2度一个记录点
+    int valid_bin_count;     // 当前已记录的有效点数量
+    
+    void CalibrateMag(float mx, float my);
 };

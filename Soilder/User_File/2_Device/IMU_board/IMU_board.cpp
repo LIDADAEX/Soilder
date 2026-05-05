@@ -21,7 +21,7 @@ void IMU_Board::Update(float dt) {
     float clean_gy = data.gy;
     float clean_gz = data.gz;
 
-	if(bcnt < 1000) return;
+	if(bcnt < 100) return;
 	
 	clean_gx -= bgx/bcnt;
 	clean_gy -= bgy/bcnt;
@@ -41,7 +41,7 @@ void IMU_Board::Update(float dt) {
 }
 
 void IMU_Board::GyroBiasUpdate(float gx, float gy, float gz, float ax, float ay, float az){
-    if(std::max({ax, ay}) <= 0.3  && std::max({gx, gy, gz}) <= 0.05){
+    if(std::max({ax, ay}) <= 0.6  && std::max({gx, gy, gz}) <= 0.2){
         bgx += gx;
         bgy += gy;
         bgz += gz;

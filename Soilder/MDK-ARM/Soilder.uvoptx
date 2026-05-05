@@ -157,50 +157,18 @@
         <Bp>
           <Number>0</Number>
           <Type>0</Type>
-          <LineNumber>10</LineNumber>
+          <LineNumber>77</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134294268</Address>
+          <Address>134311166</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>..\User_File\3_Chariot\1_Module\Nav\intercation.cpp</Filename>
+          <Filename>..\User_File\2_Device\IMU_board\attitude_estimator.cpp</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\Soilder\../User_File/3_Chariot/1_Module/Nav/intercation.cpp\10</Expression>
-        </Bp>
-        <Bp>
-          <Number>1</Number>
-          <Type>0</Type>
-          <LineNumber>27</LineNumber>
-          <EnabledFlag>1</EnabledFlag>
-          <Address>134309194</Address>
-          <ByteObject>0</ByteObject>
-          <HtxType>0</HtxType>
-          <ManyObjects>0</ManyObjects>
-          <SizeOfObject>0</SizeOfObject>
-          <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>1</BreakIfRCount>
-          <Filename>..\User_File\3_Chariot\1_Module\Nav\naivgation.cpp</Filename>
-          <ExecCommand></ExecCommand>
-          <Expression>\\Soilder\../User_File/3_Chariot/1_Module/Nav/naivgation.cpp\27</Expression>
-        </Bp>
-        <Bp>
-          <Number>2</Number>
-          <Type>0</Type>
-          <LineNumber>84</LineNumber>
-          <EnabledFlag>1</EnabledFlag>
-          <Address>134317118</Address>
-          <ByteObject>0</ByteObject>
-          <HtxType>0</HtxType>
-          <ManyObjects>0</ManyObjects>
-          <SizeOfObject>0</SizeOfObject>
-          <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>1</BreakIfRCount>
-          <Filename>..\User_File\2_Device\IMU_board\IST8310.cpp</Filename>
-          <ExecCommand></ExecCommand>
-          <Expression>\\Soilder\../User_File/2_Device/IMU_board/IST8310.cpp\84</Expression>
+          <Expression>\\Soilder\../User_File/2_Device/IMU_board/attitude_estimator.cpp\77</Expression>
         </Bp>
       </Breakpoint>
       <WatchWindow1>
@@ -268,6 +236,26 @@
           <count>12</count>
           <WinNumber>1</WinNumber>
           <ItemText>bgz/bcnt</ItemText>
+        </Ww>
+        <Ww>
+          <count>13</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>max_x</ItemText>
+        </Ww>
+        <Ww>
+          <count>14</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>min_x</ItemText>
+        </Ww>
+        <Ww>
+          <count>15</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>max_y</ItemText>
+        </Ww>
+        <Ww>
+          <count>16</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>min_y</ItemText>
         </Ww>
       </WatchWindow1>
       <WatchWindow2>

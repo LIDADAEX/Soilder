@@ -66,19 +66,19 @@ void BMI088::SPI_TxRxCpltCallback(uint8_t* Tx_Buffer, uint8_t* Rx_Buffer, uint16
         m_data.gx = (int16_t)((Rx_Buffer[2] << 8) | Rx_Buffer[1]) * scale;
         m_data.gy = (int16_t)((Rx_Buffer[4] << 8) | Rx_Buffer[3]) * scale;
         m_data.gz = (int16_t)((Rx_Buffer[6] << 8) | Rx_Buffer[5]) * scale;
-		printf("{g}%.5f,%.5f,%.5f\n", m_data.gx, m_data.gy, m_data.gz);
+		//printf("{g}%.5f,%.5f,%.5f\n", m_data.gx, m_data.gy, m_data.gz);
     } 
     else if (Tx_Buffer[0] == 0x92) { 
         const float scale = 12.0f / 32768.0f;
         m_data.ax = (int16_t)((Rx_Buffer[3] << 8) | Rx_Buffer[2]) * scale;
         m_data.ay = (int16_t)((Rx_Buffer[5] << 8) | Rx_Buffer[4]) * scale;
         m_data.az = (int16_t)((Rx_Buffer[7] << 8) | Rx_Buffer[6]) * scale;
-		printf("{a}%.5f,%.5f,%.5f\n", m_data.ax, m_data.ay, m_data.az);
+		//printf("{a}%.5f,%.5f,%.5f\n", m_data.ax, m_data.ay, m_data.az);
     }
-    else if (Tx_Buffer[0] == 0xA2 && Length == 4) {
+    else if (Tx_Buffer[0] == 0xA2) {
         // 修正: Rx_Buffer[2] 为 LSB 或 MSB，需结合 Datasheet 确认，此处长度保证了不溢出
         m_data.temperature = (int16_t)((Rx_Buffer[3] << 8) | Rx_Buffer[2]);
-		printf("{temperature}%.5f\n", m_data.temperature);
+		//printf("{temperature}%.5f\n", m_data.temperature);
     }
 }
 
