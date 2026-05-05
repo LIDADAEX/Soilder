@@ -16,19 +16,14 @@ struct NavPacket {
 
 struct CmdVelPacket
 {
-    uint8_t header = 0x6A;
+    uint8_t header[2] = {'S','P'};
+	uint8_t mode;
+	float yaw;
+	float pitch;
     float linear_x;
     float linear_y;
-    union
-    {
-        uint8_t all = 0;
-        struct 
-        {
-            uint8_t chassis_mode : 1;  // 1->世界坐标系, 0->机器人坐标系
-            uint8_t scan_status : 1;
-            uint8_t reserved : 6;
-        } bits; // 命名为bits以便访问
-    } config;
+	uint8_t all;
+	
     uint16_t checksum = 0;
 } __attribute__((packed));
 

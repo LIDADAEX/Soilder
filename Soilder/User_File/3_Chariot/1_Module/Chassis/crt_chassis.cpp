@@ -128,6 +128,7 @@ void Chassis::chassis_init(Class_Motor_DJI_C620& x_p,
     m_IMU.Set_Active_Mode(false);
 
     m_IMU_Board.Init(&hspi1, GPIOB, GPIO_PIN_0, GPIOA, GPIO_PIN_4);
+    m_IST8310.Init(&hi2c3, GPIOG, GPIO_PIN_3, GPIOG, GPIO_PIN_6);
 }
 
 void Chassis::TIM_1ms_Calculate_PeriodElapsedCallback() {

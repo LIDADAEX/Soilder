@@ -5,7 +5,7 @@ void NavigationHandler::CMDProcess(uint8_t* buf, uint32_t len) {
     if (len < sizeof(CmdVelPacket)) return;
 
     // 2. 帧头校验 (0x6A)
-    if (buf[0] != 0x6A) return;
+    if ((buf[0] != 'S') && (buf[0] != 'P')) return;
 
     // 3. CRC16 校验计算
     // 关键点：计算长度 = 结构体总长度 - 校验和字段长度 (2字节)
@@ -24,12 +24,10 @@ void NavigationHandler::CMDProcess(uint8_t* buf, uint32_t len) {
     // 4. 解析数据并映射到静态对象 Robot::chassis
     CmdVelPacket* pkg = reinterpret_cast<CmdVelPacket*>(buf);
 
-    m_ptr_chassis->Set_Target_VX(pkg->linear_x);
     m_ptr_chassis->Set_Target_VY(pkg->linear_y);
+    m_ptr_chassis->Set_Target_VX(pkg->linear_x);
     
-    // 映射位域信息
-    m_ptr_chassis->Set_World_Frame_Status(pkg->config.bits.chassis_mode == 1);
-        
+	m_flag ++;
 }
 
 void NavigationHandler::GenerateNavStatus() {

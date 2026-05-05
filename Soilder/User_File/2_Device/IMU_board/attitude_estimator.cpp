@@ -1,6 +1,14 @@
 #include "attitude_estimator.h"
 
+#define DEG2RAD 0.01745329251f
+
+
+
 void Class_Attitude_Estimator::Update(float ax, float ay, float az, float gx, float gy, float gz, float dt) {
+    gx *= DEG2RAD;
+    gy *= DEG2RAD;
+    gz *= DEG2RAD;
+    
     float32_t ax_f, ay_f, az_f;
 
     // 2. 使用 DSP 库进行单点 FIR 滤波

@@ -35,6 +35,8 @@ private:
     static void Referee_USART2_Callback(uint8_t* Rx_Data, uint16_t Length);
 
     static void IMU_SPI1_Callback(uint8_t *Tx_Buffer, uint8_t *Rx_Buffer, uint16_t Length);
+    static void IST_I2C3_Callback(uint16_t DevAddress, uint8_t *Tx_Buffer, uint8_t *Rx_Buffer, uint16_t Tx_Length, uint16_t Rx_Length);
+    static void IST_I2C3_Error_Callback(uint16_t DevAddress);
 
     static void Controlcmd_DataProcess(uint8_t* Rx_Data, uint16_t Length);
 

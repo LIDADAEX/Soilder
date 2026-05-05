@@ -21,6 +21,7 @@ void HAL_SYSTICK_Callback(void) {
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
+    Robot::chassis.m_IST8310.EXTI_Callback(GPIO_Pin);
 }
 
 void Robot::init(){
@@ -48,6 +49,7 @@ void Robot::init(){
     LOG_INFO("底盘电机初始化完成");
 
     SPI_Init(&hspi1, IMU_SPI1_Callback);
+    I2C_Init(&hi2c3, IST_I2C3_Callback, IST_I2C3_Error_Callback);
 
     chassis.chassis_init(motor_x_p, motor_x_m, motor_y_p, motor_y_m);
     LOG_INFO("底盘初始化完成");
@@ -134,6 +136,14 @@ void Robot::IMU_SPI1_Callback(uint8_t *Tx_Buffer, uint8_t *Rx_Buffer, uint16_t L
         (SPI1_Manage_Object.Now_GPIO_Pin == chassis.m_IMU_Board.m_aPin))){
         chassis.m_IMU_Board.SPI_TxRxCpltCallback(Tx_Buffer, Rx_Buffer, Length);
     }
+}
+
+void Robot::IST_I2C3_Callback(uint16_t DevAddress, uint8_t *Tx_Buffer, uint8_t *Rx_Buffer, uint16_t Tx_Length, uint16_t Rx_Length){
+    chassis.m_IST8310.I2C_TxRxCpltCallback(DevAddress, Tx_Buffer, Rx_Buffer, Tx_Length, Rx_Length);
+}
+
+void Robot::IST_I2C3_Error_Callback(uint16_t DevAddress){
+    chassis.m_IST8310.Init(&hi2c3, GPIOG, GPIO_PIN_3, GPIOG, GPIO_PIN_6);
 }
 
 void Robot::DR16_UART3_Callback(uint8_t* Rx_Data, uint16_t Length) {

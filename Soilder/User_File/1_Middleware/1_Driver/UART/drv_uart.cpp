@@ -36,7 +36,7 @@ static Struct_UART_Manage_Object* Get_UART_Manage_Object(UART_HandleTypeDef* hua
  */
 static void Internal_UART_Start_Receive(Struct_UART_Manage_Object* obj) {
     if (obj == nullptr || obj->UART_Handler == nullptr) return;
-
+	
     HAL_UARTEx_ReceiveToIdle_DMA(obj->UART_Handler, obj->Rx_Buffer, obj->Rx_Buffer_Length);
     // 禁用 DMA 半完成中断，防止数据接收到一半触发回调
     __HAL_DMA_DISABLE_IT(obj->UART_Handler->hdmarx, DMA_IT_HT);
@@ -92,10 +92,12 @@ void TIM_1ms_UART_Period_Elapsed_Callback() {
  * @brief HAL 库 UART 接收回调 (RxEvent 对应 Idle 中断)
  */
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef* huart, uint16_t Size) {
-    if (!init_finished || huart == nullptr) return;
+	Struct_UART_Manage_Object* obj = Get_UART_Manage_Object(huart);
 
-    Struct_UART_Manage_Object* obj = Get_UART_Manage_Object(huart);
-    if (obj == nullptr) return;
+	if (!init_finished || huart == nullptr || obj == nullptr) {
+		Internal_UART_Start_Receive(obj);
+		return;
+	}
 
     // 停止 DMA 接收以处理数据
     HAL_UART_DMAStop(huart);
@@ -106,7 +108,8 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef* huart, uint16_t Size) {
     }
 
     // 重新开启接收
-    Internal_UART_Start_Receive(obj);
+    
+	Internal_UART_Start_Receive(obj);
 }
 
 /**

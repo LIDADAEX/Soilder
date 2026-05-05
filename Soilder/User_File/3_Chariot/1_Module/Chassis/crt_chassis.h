@@ -5,7 +5,9 @@
 #include "1_Middleware/3_Debug/debug_log.h"
 #include "2_Device/Motor/Motor_DJI/dvc_motor_dji.h"
 #include "2_Device/IMU/dm_imu.h"
-#include "2_Device/IMU_borad/BMI088.h"
+#include "2_Device/IMU_board/BMI088.h"
+#include "2_Device/IMU_board/IST8310.h"
+
 #include "arm_math.h"  // 引入 ARM DSP 库
 
 extern Class_Motor_DJI_C620 motor_x_p;
@@ -104,6 +106,7 @@ class Chassis {
 
     Class_IMU m_IMU;
     BMI088 m_IMU_Board;
+    IST8310 m_IST8310;
 
    private:
     // 内部电机指针关联数组 (0:X+, 1:X-, 2:Y+, 3:Y-)

@@ -45,7 +45,7 @@ bool BMI088::Init(SPI_HandleTypeDef* hspi, GPIO_TypeDef* gPort, uint16_t gPin, G
     WriteReg(true, 0x7D, 0x04); // 现在才能真正写入正常模式
     HAL_Delay(1000);
 
-	for (int i = 0; i < 3000; i++) {
+	for (int i = 0; i < 1000; i++) {
 		RequestGyroRead();
 		gyro_bias_x += sm_data.gx;
 		gyro_bias_y += sm_data.gy;
@@ -53,9 +53,9 @@ bool BMI088::Init(SPI_HandleTypeDef* hspi, GPIO_TypeDef* gPort, uint16_t gPin, G
 		HAL_Delay(1);
 	}
 
-	gyro_bias_x /= 3000;
-	gyro_bias_y /= 3000;
-	gyro_bias_z /= 3000;
+	gyro_bias_x /= 1000;
+	gyro_bias_y /= 1000;
+	gyro_bias_z /= 1000;
 	
 	isInitialed = true;
 
@@ -63,7 +63,7 @@ bool BMI088::Init(SPI_HandleTypeDef* hspi, GPIO_TypeDef* gPort, uint16_t gPin, G
 }
 
 void BMI088::RequestGyroRead() {
-    Struct_SPI_Manage_Object* obj = Get_SPI_Obj(m_hspi);
+    Struct_IIC_Manage_Object* obj = Get_SPI_Obj(m_hspi);
 	if (!obj) return;
 	while(m_hspi->State != HAL_SPI_STATE_READY);
 	
@@ -78,7 +78,7 @@ void BMI088::RequestGyroRead() {
 }
 
 void BMI088::RequestAccelRead() {
-    Struct_SPI_Manage_Object* obj = Get_SPI_Obj(m_hspi);
+    Struct_IIC_Manage_Object* obj = Get_SPI_Obj(m_hspi);
     if (!obj) return;
 	while(m_hspi->State != HAL_SPI_STATE_READY);
 
@@ -93,7 +93,7 @@ void BMI088::RequestAccelRead() {
 
 void BMI088::TIM_100ms_Callback() {
     // 调用异步 SPI 传输：读取 3 字节温度数据 (包含 1 字节 Dummy)
-    Struct_SPI_Manage_Object* obj = Get_SPI_Obj(m_hspi);
+    Struct_IIC_Manage_Object* obj = Get_SPI_Obj(m_hspi);
     if (!obj) return;
 
     obj->Tx_Buffer[0] = 0xA2; // 加速度计读地址
