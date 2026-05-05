@@ -7,6 +7,7 @@ Class_Referee Robot::referee;
 NavigationHandler Robot::navigation;
 
 bool flag_1ms = false;
+bool flag_1500ms = false;
 
 extern bool init_finished;
 
@@ -21,7 +22,7 @@ void HAL_SYSTICK_Callback(void) {
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
-    Robot::chassis.m_IST8310.EXTI_Callback(GPIO_Pin);
+    Robot::chassis.m_IMU_Board.mag.EXTI_Callback(GPIO_Pin);
 }
 
 void Robot::init(){
@@ -77,12 +78,11 @@ void Robot::TIM_500us_PeriodElapsedCallback(){
 
 void Robot::TIM_1ms_Calculate_PeriodElapsedCallback(){
     if ((dr16.Get_Status() != DR16_Status_ENABLE) && !navigation.GetAlive()) {
-        chassis.Set_Control_Target(0, 0, 0, true);
+        chassis.Set_Control_Target(0, 0, 0, false);
     }
-	chassis.m_IMU_Board.RequestAccelRead();
-	chassis.m_IMU_Board.RequestGyroRead();
+	chassis.m_IMU_Board.imu.RequestAccelRead();
+	chassis.m_IMU_Board.imu.RequestGyroRead();
 	
-	chassis.m_IMU.TIM_1ms_Calculate_PeriodElapsedCallback();
     chassis.TIM_1ms_Calculate_PeriodElapsedCallback();
     
 	navigation.GenerateNavStatus();
@@ -130,33 +130,40 @@ void Robot::Referee_USART2_Callback(uint8_t* Rx_Data, uint16_t Length) {
 }
 
 void Robot::IMU_SPI1_Callback(uint8_t *Tx_Buffer, uint8_t *Rx_Buffer, uint16_t Length){
-    if(((SPI1_Manage_Object.Now_GPIOx == chassis.m_IMU_Board.m_gPort) &&
-        (SPI1_Manage_Object.Now_GPIO_Pin == chassis.m_IMU_Board.m_gPin)) ||
-        ((SPI1_Manage_Object.Now_GPIOx == chassis.m_IMU_Board.m_aPort) &&
-        (SPI1_Manage_Object.Now_GPIO_Pin == chassis.m_IMU_Board.m_aPin))){
-        chassis.m_IMU_Board.SPI_TxRxCpltCallback(Tx_Buffer, Rx_Buffer, Length);
+    if(((SPI1_Manage_Object.Now_GPIOx == chassis.m_IMU_Board.imu.m_gPort) &&
+        (SPI1_Manage_Object.Now_GPIO_Pin == chassis.m_IMU_Board.imu.m_gPin)) ||
+        ((SPI1_Manage_Object.Now_GPIOx == chassis.m_IMU_Board.imu.m_aPort) &&
+        (SPI1_Manage_Object.Now_GPIO_Pin == chassis.m_IMU_Board.imu.m_aPin))){
+        chassis.m_IMU_Board.imu.SPI_TxRxCpltCallback(Tx_Buffer, Rx_Buffer, Length);
     }
 }
 
 void Robot::IST_I2C3_Callback(uint16_t DevAddress, uint8_t *Tx_Buffer, uint8_t *Rx_Buffer, uint16_t Tx_Length, uint16_t Rx_Length){
-    chassis.m_IST8310.I2C_TxRxCpltCallback(DevAddress, Tx_Buffer, Rx_Buffer, Tx_Length, Rx_Length);
+    chassis.m_IMU_Board.mag.I2C_TxRxCpltCallback(DevAddress, Tx_Buffer, Rx_Buffer, Tx_Length, Rx_Length);
 }
 
 void Robot::IST_I2C3_Error_Callback(uint16_t DevAddress){
-    chassis.m_IST8310.Init(&hi2c3, GPIOG, GPIO_PIN_3, GPIOG, GPIO_PIN_6);
+    chassis.m_IMU_Board.mag.Init(&hi2c3, GPIOG, GPIO_PIN_3, GPIOG, GPIO_PIN_6);
 }
 
 void Robot::DR16_UART3_Callback(uint8_t* Rx_Data, uint16_t Length) {
     if(!init_finished) return;
     dr16.UART_RxCpltCallback(Rx_Data, Length);
     auto& data = dr16.Get_Data();
-    chassis.Set_Control_Target(data.Left_X, data.Left_Y, data.Side_Wheel, true);
+    chassis.Set_Control_Target(data.Left_X, data.Left_Y, data.Side_Wheel, false);
 } 
 
 void Robot::TIM_100ms_PeriodElapsedCallback() {
     if(!init_finished) return;
+
+    static uint32_t cnt = 0;
+    if(!(cnt % 15)){
+        flag_1ms = true;
+    }
+    cnt ++;
+
     dr16.TIM_Alive_PeriodElapsedCallback();
-	chassis.m_IMU_Board.TIM_100ms_Callback();
+	chassis.m_IMU_Board.imu.RequestTempRead();
     navigation.TIM_100ms_Callback();
 	
 }

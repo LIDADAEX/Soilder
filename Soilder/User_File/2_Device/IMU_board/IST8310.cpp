@@ -1,4 +1,5 @@
 #include "IST8310.h"
+#include <stdio.h>
 
 IST8310::Data IST8310::sm_data = {0};
 
@@ -30,6 +31,7 @@ bool IST8310::Init(I2C_HandleTypeDef* hi2c, GPIO_TypeDef* drdyPort, uint16_t drd
     // 3. 启动第一次测量，踢皮球的第一脚，后续将由中断闭环接管
 	WriteReg(0x0B, 0x01); // 启动测量，DRDY 将在数据准备好后变为高并保持，直到你读取数据后自动清零
 
+	isInitialed = true;
     return true;
 }
 
@@ -78,6 +80,8 @@ void IST8310::I2C_TxRxCpltCallback(uint16_t DevAddress, uint8_t *Tx_Buffer, uint
         sm_data.mx = raw_x * scale;
         sm_data.my = raw_y * scale;
         sm_data.mz = raw_z * scale;
+		
+		printf("{IST}%.5f,%.5f,%.5f\n", sm_data.mx, sm_data.my, sm_data.mz);
 
         // 【算法更新点】此处可以将数据推给你的 IMU 解算器
 

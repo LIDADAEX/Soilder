@@ -127,11 +127,12 @@ void Chassis::chassis_init(Class_Motor_DJI_C620& x_p,
     HAL_Delay(1);
     m_IMU.Set_Active_Mode(false);
 
-    m_IMU_Board.Init(&hspi1, GPIOB, GPIO_PIN_0, GPIOA, GPIO_PIN_4);
-    m_IST8310.Init(&hi2c3, GPIOG, GPIO_PIN_3, GPIOG, GPIO_PIN_6);
+    m_IMU_Board.Init();
 }
 
 void Chassis::TIM_1ms_Calculate_PeriodElapsedCallback() {
+    m_IMU_Board.Update(0.001);
+
     // // 1. 检查电机在线状态
     // bool all_motors_healthy = true;
 
@@ -165,7 +166,7 @@ void Chassis::TIM_1ms_Calculate_PeriodElapsedCallback() {
     float32_t in_vy = (abs_vy < m_deadzone) ? 0.0f : m_target_vy;
     float32_t in_vw = (abs_vw < m_deadzone) ? 0.0f : m_target_vw;
 	
-	m_now_angle = m_IMU_Board.GetData().yaw / 360 * 2 * PI;
+	m_now_angle = m_IMU_Board.yaw / 360 * 2 * PI;
 
     if (in_vx == 0.0f && in_vy == 0.0f && in_vw == 0.0f) {
         for (int i = 0; i < 4; i++){ 
