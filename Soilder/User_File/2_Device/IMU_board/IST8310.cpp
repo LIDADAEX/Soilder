@@ -81,7 +81,7 @@ void IST8310::I2C_TxRxCpltCallback(uint16_t DevAddress, uint8_t *Tx_Buffer, uint
         sm_data.my = raw_y * scale;
         sm_data.mz = raw_z * scale;
 		
-		printf("{IST}%.5f,%.5f,%.5f\n", sm_data.mx, sm_data.my, sm_data.mz);
+		//printf("{IST}%.5f,%.5f,%.5f\n", sm_data.mx, sm_data.my, sm_data.mz);
 
         // 【算法更新点】此处可以将数据推给你的 IMU 解算器
 

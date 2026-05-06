@@ -23,7 +23,7 @@ typedef void (*SPI_Call_Back)(uint8_t *Tx_Buffer, uint8_t *Rx_Buffer, uint16_t L
  * @brief CAN通信处理结构体
  *
  */
-struct Struct_IIC_Manage_Object
+struct Struct_SPI_Manage_Object
 {
     SPI_HandleTypeDef *SPI_Handler;
     GPIO_TypeDef *Now_GPIOx;
@@ -39,15 +39,15 @@ struct Struct_IIC_Manage_Object
 
 extern bool init_finished;
 
-extern Struct_IIC_Manage_Object SPI1_Manage_Object;
-extern Struct_IIC_Manage_Object SPI2_Manage_Object;
-extern Struct_IIC_Manage_Object SPI3_Manage_Object;
+extern Struct_SPI_Manage_Object SPI1_Manage_Object;
+extern Struct_SPI_Manage_Object SPI2_Manage_Object;
+extern Struct_SPI_Manage_Object SPI3_Manage_Object;
 
 extern uint8_t SPI5_PF6_Tx_Data[];
 
 /* Exported function declarations ---------------------------------------------*/
 
-Struct_IIC_Manage_Object* Get_SPI_Obj(SPI_HandleTypeDef* h);
+Struct_SPI_Manage_Object* Get_SPI_Obj(SPI_HandleTypeDef* h);
 
 void SPI_Init(SPI_HandleTypeDef *hspi, SPI_Call_Back Callback_Function);
 

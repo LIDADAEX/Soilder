@@ -107,6 +107,7 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM2_Init();
   MX_I2C3_Init();
+  MX_TIM10_Init();
   /* USER CODE BEGIN 2 */
   Task_Init();
   /* USER CODE END 2 */

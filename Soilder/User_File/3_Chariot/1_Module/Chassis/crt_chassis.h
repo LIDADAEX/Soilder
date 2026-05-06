@@ -124,7 +124,7 @@ class Chassis {
     float32_t m_vel_to_omega_coeff;
 
     // 系统延迟补偿参数
-    float32_t m_delay_comp_ms = 2.0f;
+    float32_t m_delay_comp_ms = 8.0f;
 };
 
 #endif

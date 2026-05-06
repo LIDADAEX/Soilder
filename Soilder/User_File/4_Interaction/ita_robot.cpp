@@ -6,7 +6,7 @@ Class_DR16 Robot::dr16;
 Class_Referee Robot::referee;
 NavigationHandler Robot::navigation;
 
-bool flag_1ms = false;
+bool flag_2ms = false;
 bool flag_1500ms = false;
 
 extern bool init_finished;
@@ -18,7 +18,10 @@ bool readFlag(bool& flag) {
 }
 
 void HAL_SYSTICK_Callback(void) {
-    flag_1ms = true;
+	static uint32_t cnt = 0;
+	if(cnt % 2)
+		flag_2ms = true;
+	cnt ++;
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
@@ -51,7 +54,7 @@ void Robot::init(){
 
     SPI_Init(&hspi1, IMU_SPI1_Callback);
     I2C_Init(&hi2c3, IST_I2C3_Callback, IST_I2C3_Error_Callback);
-
+	
     chassis.chassis_init(motor_x_p, motor_x_m, motor_y_p, motor_y_m);
     LOG_INFO("底盘初始化完成");
 
@@ -63,11 +66,11 @@ void Robot::init(){
 
     HAL_TIM_Base_Start_IT(&htim3);
 	HAL_TIM_Base_Start_IT(&htim2);
-
+	HAL_TIM_PWM_Start(&htim10, TIM_CHANNEL_1);
 }
 
 void Robot::loop(){
-    if (readFlag(flag_1ms)) {
+    if (readFlag(flag_2ms)) {
         TIM_1ms_Calculate_PeriodElapsedCallback();
         TIM_1ms_CAN_PeriodElapsedCallback();
     }
@@ -78,7 +81,8 @@ void Robot::TIM_500us_PeriodElapsedCallback(){
 
 void Robot::TIM_1ms_Calculate_PeriodElapsedCallback(){
     if ((dr16.Get_Status() != DR16_Status_ENABLE) && !navigation.GetAlive()) {
-        chassis.Set_Control_Target(0, 0, 0, false);
+        chassis.Set_Control_Target(0, 0, 0, true
+			);
     }
 	chassis.m_IMU_Board.imu.RequestAccelRead();
 	chassis.m_IMU_Board.imu.RequestGyroRead();
@@ -150,7 +154,7 @@ void Robot::DR16_UART3_Callback(uint8_t* Rx_Data, uint16_t Length) {
     if(!init_finished) return;
     dr16.UART_RxCpltCallback(Rx_Data, Length);
     auto& data = dr16.Get_Data();
-    chassis.Set_Control_Target(data.Left_X, data.Left_Y, data.Side_Wheel, false);
+    chassis.Set_Control_Target(data.Left_X, data.Left_Y, data.Side_Wheel, true);
 } 
 
 void Robot::TIM_100ms_PeriodElapsedCallback() {
@@ -158,12 +162,15 @@ void Robot::TIM_100ms_PeriodElapsedCallback() {
 
     static uint32_t cnt = 0;
     if(!(cnt % 15)){
-        flag_1ms = true;
+        flag_1500ms = true;
     }
     cnt ++;
 
     dr16.TIM_Alive_PeriodElapsedCallback();
-	chassis.m_IMU_Board.imu.RequestTempRead();
+
+    if(readFlag(flag_1500ms))
+	    chassis.m_IMU_Board.imu.RequestTempRead();
+
     navigation.TIM_100ms_Callback();
 	
 }

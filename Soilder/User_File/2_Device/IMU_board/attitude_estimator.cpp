@@ -109,67 +109,67 @@ void Class_Attitude_Estimator::Update(float ax, float ay, float az,
     arm_sqrt_f32(sum_sq, &norm);
 
     if (norm > 0.1f) {
-        // 2. 角速度转为 弧度/s
         float gx_rad = gx * 0.01745329251f;
         float gy_rad = gy * 0.01745329251f;
         float gz_rad = gz * 0.01745329251f;
 
-        // 3. 先更新 Roll 和 Pitch (需要用它们来给磁力计做补偿)
+        // 1. 更新 Roll 和 Pitch (互补滤波)
         float accel_roll = atan2f(ay_f, az_f);
         float accel_pitch = -asinf(ax_f / norm);
-
         r = 0.995f * (r + gx_rad * dt) + 0.005f * accel_roll;
         p = 0.995f * (p + gy_rad * dt) + 0.005f * accel_pitch;
 
-        // ---------------------------------------------------------
-        // 4. 磁力计校准记录及数据处理
-        // ---------------------------------------------------------
-        // 传入原始 mx, my 进行动态阵列记录并适时生成校准参数
+        // 2. 磁力计倾角补偿 (依然需要，否则姿态变了，角度一致性就丢了)
+        // 注意：这里建议先用你的 CalibrateMag 处理一下，哪怕不准也能提高一致性
         CalibrateMag(mx, my);
-
-        // 应用硬磁和软磁修正
         float mx_cal = (mx - mag_offset_x) * mag_scale_x;
         float my_cal = (my - mag_offset_y) * mag_scale_y;
-        float mz_cal = mz; // 二维罗盘校准暂不处理Z轴
-        
-        // ---------------------------------------------------------
-        // 5. 磁力计倾角补偿 (Tilt Compensation)
-        // 使用校准后的磁力计数据
-        // ---------------------------------------------------------
-        float cos_r = cosf(r);
-        float sin_r = sinf(r);
-        float cos_p = cosf(p);
-        float sin_p = sinf(p);
-        
-        float mx_comp = mx_cal * cos_p + mz_cal * sin_p;
-        float my_comp = mx_cal * sin_r * sin_p + my_cal * cos_r - mz_cal * sin_r * cos_p;
-        
-        // 得到补偿后的磁力计绝对偏航角 (范围 -PI 到 PI)
-        float mag_yaw = atan2f(my_comp, mx_comp);
 
-        // ---------------------------------------------------------
-        // 6. 修复 Yaw 过零点乱跳问题 (最短路径融合)
-        // ---------------------------------------------------------
-        y += gz_rad * dt; // 先用陀螺仪积分出一个预测值
-
-        // 计算磁力计和陀螺仪预测值之间的偏差
-        float yaw_err = mag_yaw - y;
+        float cos_r = cosf(r), sin_r = sinf(r);
+        float cos_p = cosf(p), sin_p = sinf(p);
         
-        // 将偏差强制约束在 -PI 到 PI 之间 (处理 +179度 和 -179度 之间的短路径)
-        while (yaw_err >  M_PI) yaw_err -= 2.0f * M_PI;
-        while (yaw_err < -M_PI) yaw_err += 2.0f * M_PI;
+        float mx_comp = mx_cal * cos_p + mz * sin_p;
+        float my_comp = mx_cal * sin_r * sin_p + my_cal * cos_r - mz * sin_r * cos_p;
+        
+        // 得到当前环境下的“磁场特征角度”
+        current_mag_yaw = atan2f(my_comp, mx_comp);
 
-        // 利用互补滤波消除累积误差 (权重给0.01或0.02)
-        y += 0.01f * yaw_err; 
+        // 3. Yaw 轴处理逻辑
+        y += gz_rad * dt; // 纯靠陀螺仪积分
 
-        // 保证 y 自身也在 -PI 到 PI 的合理范围内
+        if (!has_set_ref) {
+            // 初始状态：记录当前磁场角度作为“零位地标”
+            target_mag_yaw = current_mag_yaw;
+            y = 0.0f; 
+            has_set_ref = true;
+        } else {
+            // 计算当前磁场角度与参考地标的偏差
+            float mag_err = current_mag_yaw - target_mag_yaw;
+            
+            // 归一化到 [-PI, PI]
+            while (mag_err >  M_PI) mag_err -= 2.0f * M_PI;
+            while (mag_err < -M_PI) mag_err += 2.0f * M_PI;
+
+            // 4. 特征点对齐：如果磁场回到了地标附近 (比如误差在 2° 以内)
+            if (fabsf(mag_err) < (2.0f * 0.01745329f)) {
+                // 不要直接暴力赋值 y = 0，那样控制会抖动
+                // 采用极缓慢的融合，或者当满足特定条件时微调
+                float yaw_to_zero_err = 0.0f - y; 
+                while (yaw_to_zero_err >  M_PI) yaw_to_zero_err -= 2.0f * M_PI;
+                while (yaw_to_zero_err < -M_PI) yaw_to_zero_err += 2.0f * M_PI;
+
+                // 只有当地标对齐时，才利用这 5% 的权重修正陀螺仪漂移
+                y += 0.05f * yaw_to_zero_err; 
+            }
+        }
+
+        // 保证 y 在 [-PI, PI]
         while (y >  M_PI) y -= 2.0f * M_PI;
         while (y < -M_PI) y += 2.0f * M_PI;
 
-        // 7. 最终转回度 (deg) 给飞控
+        // 最终输出
         Roll  = r * 57.29577951f;
         Pitch = p * 57.29577951f;
         Yaw   = y * 57.29577951f;
-		printf("{pos}%.5f\n", Yaw);
     }
 }

@@ -2,13 +2,13 @@
 #include <algorithm>
 
 void IMU_Board::Init() {
-    imu.Init(&hspi1, GPIOB, GPIO_PIN_0, GPIOA, GPIO_PIN_4);
+    imu.Init(&hspi1, GPIOB, GPIO_PIN_0, GPIOA, GPIO_PIN_4, &htim10);
     mag.Init(&hi2c3, GPIOG, GPIO_PIN_3, GPIOG, GPIO_PIN_6);
     estimator.Init();
 }
 
 void IMU_Board::Update(float dt) {
-    if(!imu.IsInitialed()) return;
+    if(!imu.IsInitialed() || !imu.IsStable()) return;
 
     auto data = imu.GetData();
     auto m = mag.GetData();
@@ -41,7 +41,7 @@ void IMU_Board::Update(float dt) {
 }
 
 void IMU_Board::GyroBiasUpdate(float gx, float gy, float gz, float ax, float ay, float az){
-    if(std::max({ax, ay}) <= 0.6  && std::max({gx, gy, gz}) <= 0.2){
+    if(bcnt < 1000){
         bgx += gx;
         bgy += gy;
         bgz += gz;

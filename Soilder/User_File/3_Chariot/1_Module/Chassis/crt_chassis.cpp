@@ -131,7 +131,7 @@ void Chassis::chassis_init(Class_Motor_DJI_C620& x_p,
 }
 
 void Chassis::TIM_1ms_Calculate_PeriodElapsedCallback() {
-    m_IMU_Board.Update(0.001);
+    m_IMU_Board.Update(0.002);
 
     // // 1. 检查电机在线状态
     // bool all_motors_healthy = true;

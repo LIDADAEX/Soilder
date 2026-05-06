@@ -34,6 +34,10 @@ private:
     // --- 磁力计动态校准相关 ---
     MagRecord Mag_Bins[180]; // -180~180度，每2度一个记录点
     int valid_bin_count;     // 当前已记录的有效点数量
+
+	float target_mag_yaw;    // 记录零位时的磁场特征角度
+	bool  has_set_ref = false; // 是否已经捕获过参考点
+	float current_mag_yaw;   // 当前实时计算出的磁场角度（用于观察
     
     void CalibrateMag(float mx, float my);
 };

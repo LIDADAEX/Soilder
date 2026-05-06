@@ -8,15 +8,15 @@
 
 /* Private variables ---------------------------------------------------------*/
 
-Struct_IIC_Manage_Object SPI1_Manage_Object = {0};
-Struct_IIC_Manage_Object SPI2_Manage_Object = {0};
-Struct_IIC_Manage_Object SPI3_Manage_Object = {0};
+Struct_SPI_Manage_Object SPI1_Manage_Object = {0};
+Struct_SPI_Manage_Object SPI2_Manage_Object = {0};
+Struct_SPI_Manage_Object SPI3_Manage_Object = {0};
 
 /* Private function declarations ---------------------------------------------*/
 
 /* Function prototypes -------------------------------------------------------*/
 
-Struct_IIC_Manage_Object* Get_SPI_Obj(SPI_HandleTypeDef* h) {
+Struct_SPI_Manage_Object* Get_SPI_Obj(SPI_HandleTypeDef* h) {
     if (h->Instance == SPI1) return &SPI1_Manage_Object;
     if (h->Instance == SPI2) return &SPI2_Manage_Object;
     if (h->Instance == SPI3) return &SPI3_Manage_Object;
@@ -64,7 +64,7 @@ uint8_t SPI_Send_Receive_Data(SPI_HandleTypeDef *hspi, GPIO_TypeDef *GPIOx, uint
         return HAL_BUSY; 
     }
 
-	Struct_IIC_Manage_Object* obj = Get_SPI_Obj(hspi);
+	Struct_SPI_Manage_Object* obj = Get_SPI_Obj(hspi);
 
 	if (obj && obj->Callback_Function != nullptr) {
 		obj->Now_GPIOx = GPIOx;
@@ -98,7 +98,7 @@ void TIM_100us_SPI_PeriodElapsedCallback()
  */
 void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 {
-	Struct_IIC_Manage_Object* obj = Get_SPI_Obj(hspi);
+	Struct_SPI_Manage_Object* obj = Get_SPI_Obj(hspi);
     if (obj) {
         // 无论如何，传输结束必须立刻释放片选
         HAL_GPIO_WritePin(obj->Now_GPIOx, obj->Now_GPIO_Pin, GPIO_PIN_SET);
