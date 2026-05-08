@@ -4,6 +4,7 @@ Class_Motor_DJI_C620 motor_x_p;
 Class_Motor_DJI_C620 motor_x_m;
 Class_Motor_DJI_C620 motor_y_p;
 Class_Motor_DJI_C620 motor_y_m;
+Class_Motor_DM_Normal motor_yaw;
 
 /* ================== 1. WorldPosition 实现 ================== */
 
@@ -94,11 +95,13 @@ void Chassis::chassis_init(Class_Motor_DJI_C620& x_p,
                            Class_Motor_DJI_C620& x_m,
                            Class_Motor_DJI_C620& y_p,
                            Class_Motor_DJI_C620& y_m,
+					       Class_Motor_DM_Normal& yaw,
                            WorldPosition::Config* cfg_in) {
     m_motors[0] = &x_p;
     m_motors[1] = &x_m;
     m_motors[2] = &y_p;
     m_motors[3] = &y_m;
+    m_yaw = &yaw;
 
     WorldPosition::Config cfg;
     if (cfg_in == nullptr) {
@@ -126,13 +129,11 @@ void Chassis::chassis_init(Class_Motor_DJI_C620& x_p,
     m_IMU.Init(&hcan2, 0x05, 0.2f, 0.4f);
     HAL_Delay(1);
     m_IMU.Set_Active_Mode(false);
-
-    m_IMU_Board.Init();
 }
 
 void Chassis::TIM_1ms_Calculate_PeriodElapsedCallback() {
-    m_IMU_Board.Update(0.002);
-
+	m_IMU_Board.RTOS_IMU_1ms_Sampling_Task();
+    m_IMU_Board.RTOS_IMU_1ms_EKF_Callback();
     // // 1. 检查电机在线状态
     // bool all_motors_healthy = true;
 
@@ -166,7 +167,11 @@ void Chassis::TIM_1ms_Calculate_PeriodElapsedCallback() {
     float32_t in_vy = (abs_vy < m_deadzone) ? 0.0f : m_target_vy;
     float32_t in_vw = (abs_vw < m_deadzone) ? 0.0f : m_target_vw;
 	
-	m_now_angle = m_IMU_Board.yaw / 360 * 2 * PI;
+	m_now_angle = m_IMU_Board.Get_Yaw() / 360 * 2 * PI;
+	
+	float now_yaw_angle = m_IMU_Board.Get_YawTotalAngle() +  m_target_vw * (m_delay_comp_ms * 0.001f) - m_target_yaw;
+	
+	
 
     if (in_vx == 0.0f && in_vy == 0.0f && in_vw == 0.0f) {
         for (int i = 0; i < 4; i++){ 
@@ -246,4 +251,6 @@ void Chassis::TIM_100ms_Alive_PeriodElapsedCallback() {
             cnt[i] = 0;  // 恢复在线，重置计数
         }
     }
+	
+	m_yaw->TIM_Alive_PeriodElapsedCallback();
 }

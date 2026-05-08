@@ -6,6 +6,8 @@
 #include "2_Device/Motor/Motor_DJI/dvc_motor_dji.h"
 #include "2_Device/IMU/dm_imu.h"
 #include "2_Device/IMU_Board/IMU_board.h"
+#include "2_Device/BMI088/imu.h"
+#include "2_Device/Motor/Motor_DM/dvc_motor_dm.h"
 
 #include "arm_math.h"  // 引入 ARM DSP 库
 
@@ -13,6 +15,7 @@ extern Class_Motor_DJI_C620 motor_x_p;
 extern Class_Motor_DJI_C620 motor_x_m;
 extern Class_Motor_DJI_C620 motor_y_p;
 extern Class_Motor_DJI_C620 motor_y_m;
+extern Class_Motor_DM_Normal motor_yaw;
 
 class WorldPosition {
    public:
@@ -88,6 +91,7 @@ class Chassis {
                       Class_Motor_DJI_C620& x_m,
                       Class_Motor_DJI_C620& y_p,
                       Class_Motor_DJI_C620& y_m,
+					  Class_Motor_DM_Normal& yaw,
                       WorldPosition::Config* cfg_in = nullptr);
 
     /**
@@ -104,11 +108,12 @@ class Chassis {
     WorldPosition m_worldPosition;
 
     Class_IMU m_IMU;
-	IMU_Board m_IMU_Board;
+	Class_Board_IMU m_IMU_Board;
 
    private:
-    // 内部电机指针关联数组 (0:X+, 1:X-, 2:Y+, 3:Y-)
+	   // 内部电机指针关联数组 (0:X+, 1:X-, 2:Y+, 3:Y-)
     Class_Motor_DJI_C620* m_motors[4];
+	Class_Motor_DM_Normal* m_yaw;
 
     // 控制状态量 (统一使用 float32_t)
     float32_t m_target_vx = 0.0f;
@@ -116,6 +121,7 @@ class Chassis {
     float32_t m_target_vw = 0.0f;
     float32_t m_deadzone = 0.02f;
 	float32_t m_now_angle = 0.00f;
+	float32_t m_target_yaw = 0.0f;
     bool m_is_world_frame = false;
 
     // 预计算物理系数
@@ -124,7 +130,7 @@ class Chassis {
     float32_t m_vel_to_omega_coeff;
 
     // 系统延迟补偿参数
-    float32_t m_delay_comp_ms = 8.0f;
+    float32_t m_delay_comp_ms = 1.6f;
 };
 
 #endif

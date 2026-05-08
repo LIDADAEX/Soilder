@@ -32,7 +32,7 @@ void NavigationHandler::CMDProcess(uint8_t* buf, uint32_t len) {
 
 void NavigationHandler::GenerateNavStatus() {
     NavPacket pkg;
-    pkg.stage_enum = m_ptr_referee->Get_Game_Type();
+    pkg.stage_enum = m_ptr_referee->Get_Game_Progress();
     pkg.stage_remain_time = m_ptr_referee->Get_Stage_Remain_Time();
     pkg.current_HP = m_ptr_referee->Get_Current_HP();
     pkg.middle_buff_status = 0;

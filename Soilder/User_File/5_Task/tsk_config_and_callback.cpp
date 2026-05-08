@@ -62,7 +62,7 @@ void Task_Init() {
  *
  */
 void Task_Loop() {
-    Debug_Cmd_Poll_Callback();
+   // Debug_Cmd_Poll_Callback();
 
     Robot::loop();
 }

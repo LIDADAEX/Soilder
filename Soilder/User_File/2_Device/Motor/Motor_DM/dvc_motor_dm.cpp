@@ -332,7 +332,7 @@ void Class_Motor_DM_Normal::Output() {
 
             uint16_t tmp_angle, tmp_omega, tmp_torque, tmp_k_p, tmp_k_d;
 
-            tmp_angle = Math_Float_To_Int(Control_Angle, 0, Angle_Max, 0x7fff, (1 << 16) - 1);
+            tmp_angle = 0;
             tmp_omega = Math_Float_To_Int(Control_Omega, 0, Omega_Max, 0x7ff, (1 << 12) - 1);
             tmp_torque = Math_Float_To_Int(Control_Torque, 0, Torque_Max, 0x7ff, (1 << 12) - 1);
             tmp_k_p = Math_Float_To_Int(K_P, 0, 500.0f, 0, (1 << 12) - 1);

@@ -209,6 +209,8 @@ class Class_Motor_DM_Normal {
     inline Enum_Motor_DM_Control_Status_Normal Get_Control_Status();
 
     inline float Get_Now_Angle();
+			  
+	inline void Clear_Now_Angle();
 
     inline float Get_Now_Omega();
 
@@ -233,6 +235,8 @@ class Class_Motor_DM_Normal {
     inline float Get_K_D();
 
     inline void Set_Control_Angle(float __Control_Angle);
+	
+	void Set_Control_Angle_Shortest(float target_angle);
 
     inline void Set_Control_Omega(float __Control_Omega);
 
@@ -517,6 +521,12 @@ inline Enum_Motor_DM_Control_Status_Normal Class_Motor_DM_Normal::Get_Control_St
  */
 inline float Class_Motor_DM_Normal::Get_Now_Angle() {
     return (Rx_Data.Now_Angle);
+}
+
+inline void Class_Motor_DM_Normal::Clear_Now_Angle(){
+	Rx_Data.Total_Encoder = 0;
+	Rx_Data.Pre_Encoder = 0;
+	Rx_Data.Total_Round = 0;
 }
 
 /**

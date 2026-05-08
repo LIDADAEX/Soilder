@@ -1173,47 +1173,52 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>UserCode/2_Device/IMU_Board</GroupName>
+          <GroupName>UserCode/2_Device/IMU_T</GroupName>
           <Files>
             <File>
-              <FileName>attitude_estimator.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\User_File\2_Device\IMU_board\attitude_estimator.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>attitude_estimator.h</FileName>
+              <FileName>BMI088_Driver.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\User_File\2_Device\IMU_board\attitude_estimator.h</FilePath>
+              <FilePath>..\User_File\2_Device\BMI088\BMI088_Driver.h</FilePath>
             </File>
             <File>
-              <FileName>BMI088.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\User_File\2_Device\IMU_board\BMI088.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>BMI088.h</FileName>
+              <FileName>BMI088_Reg.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\User_File\2_Device\IMU_board\BMI088.h</FilePath>
+              <FilePath>..\User_File\2_Device\BMI088\BMI088_Reg.h</FilePath>
             </File>
             <File>
-              <FileName>IMU_board.cpp</FileName>
+              <FileName>imu.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\User_File\2_Device\IMU_board\IMU_board.cpp</FilePath>
+              <FilePath>..\User_File\2_Device\BMI088\imu.cpp</FilePath>
             </File>
             <File>
-              <FileName>IMU_board.h</FileName>
+              <FileName>imu.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\User_File\2_Device\IMU_board\IMU_board.h</FilePath>
+              <FilePath>..\User_File\2_Device\BMI088\imu.h</FilePath>
             </File>
             <File>
-              <FileName>IST8310.cpp</FileName>
+              <FileName>kalman_filter.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User_File\2_Device\BMI088\kalman_filter.c</FilePath>
+            </File>
+            <File>
+              <FileName>kalman_filter.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\User_File\2_Device\BMI088\kalman_filter.h</FilePath>
+            </File>
+            <File>
+              <FileName>QuaternionEKF.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User_File\2_Device\BMI088\QuaternionEKF.c</FilePath>
+            </File>
+            <File>
+              <FileName>QuaternionEKF.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\User_File\2_Device\BMI088\QuaternionEKF.h</FilePath>
+            </File>
+            <File>
+              <FileName>BMI088_Driver.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\User_File\2_Device\IMU_board\IST8310.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>IST8310.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\User_File\2_Device\IMU_board\IST8310.h</FilePath>
+              <FilePath>..\User_File\2_Device\BMI088\BMI088_Driver.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -1400,6 +1405,12 @@
           </Files>
         </Group>
         <Group>
+          <GroupName>::CMSIS</GroupName>
+        </Group>
+        <Group>
+          <GroupName>::Compiler</GroupName>
+        </Group>
+        <Group>
           <GroupName>Middlewares/Library/DSP Library/DSP Library</GroupName>
           <GroupOption>
             <CommonProperty>
@@ -1496,12 +1507,6 @@
               </FileOption>
             </File>
           </Files>
-        </Group>
-        <Group>
-          <GroupName>::CMSIS</GroupName>
-        </Group>
-        <Group>
-          <GroupName>::Compiler</GroupName>
         </Group>
       </Groups>
     </Target>
